@@ -1,0 +1,75 @@
+<div class="customers">
+    <h4>Customers</h4>
+    <table class="table table-hover">
+        <thead class="">
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Phone Number</th>
+                <th scope="col">Password</th>
+                <th scope="col">Address</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customers in customers %}
+            <tr>
+                <td>{{ customers.name }}</td>
+                <td>{{ customers.email }}</td>
+                <td>{{ customers.phone }}</td>
+                <td>{{ customers.password }}</td>
+                <td>{{ customers.address }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="company">
+    <h4>Company</h4>
+    <table class="table table-hover">
+        <thead class="">
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Phone Number</th>
+                <th scope="col">Password</th>
+                <th scope="col">Address</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for company in company %}
+            <tr>
+                <td>{{ company.name }}</td>
+                <td>{{ company.email }}</td>
+                <td>{{ company.phone }}</td>
+                <td>{{ company.password }}</td>
+                <td>{{ company.address }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="trainers">
+    <h4>Trainers</h4>
+    <table class="table table-hover">
+        <thead class="">
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Phone Number</th>
+                <th scope="col">Password</th>
+                <th scope="col">Address</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for trainers in trainers %}
+            <tr>
+                <td>{{ trainers.name }}</td>
+                <td>{{ trainers.email }}</td>
+                <td>{{ trainers.phone }}</td>
+                <td>{{ trainers.password }}</td>
+                <td>{{ trainers.address }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
