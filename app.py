@@ -217,16 +217,13 @@ def trainers_data():
 
 
 ################################################ API START ##########################################################
-
-
-# ************ FOR CUSTOMERS/USERS LOGIN ************
-# 
+ 
 # ************ FOR CUSTOMERS/USERS SIGNUP ************
 @app.route("/signup-api", methods=["POST"])
 def signup_api():
     try:
         if request.method == "POST":
-                email = request.form.get('email')
+                email = request.form.get('email').lower()
                 import re
                 regex = '[^@]+@[a-zA-Z0-9]+[.][a-zA-Z]+'
                 if not (re.search(regex, email)):
@@ -302,7 +299,7 @@ def companysignup_api():
             contact_person = request.form.get("contact_person")
             region = request.form.get("region")
             company_profile_pic = request.files.get('company_profile_pic')
-            email = request.form.get('email')
+            email = request.form.get('email').lower()
             import re
             regex = '[^@]+@[a-zA-Z0-9]+[.][a-zA-Z]+'
             if not (re.search(regex, email)):
@@ -371,7 +368,6 @@ def companysignup_api():
         return jsonify({"success": False, "error": str(e)})
 
 
-
 # ************ FOR PERSONAL TRAINERS SIGNUP ************
 @app.route("/trainersignup-api", methods=["POST"])
 def trainersignup_api():
@@ -379,7 +375,7 @@ def trainersignup_api():
         if request.method == "POST":
             contact_person = request.form.get('contact_person')
             region = request.form.get('region')
-            email = request.form.get('email')
+            email = request.form.get('email').lower()
             certificate = request.files.get('certificate')
             regex = '[^@]+@[a-zA-Z0-9]+[.][a-zA-Z]+'
             if not (re.search(regex, email)):
@@ -532,6 +528,7 @@ def all_customer_details():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
+
 # ************ ALL IN ONE SIGNIN ************
 @app.route("/signin-api", methods=["POST"])
 def signin_api():
@@ -540,7 +537,7 @@ def signin_api():
 
             if request.is_json:
                 data = request.get_json()
-                email = data['email']
+                email = data['email'].lower()
                 password = data['password']
 
                 query = {"email": email}
@@ -559,8 +556,8 @@ def signin_api():
                             "last_name": customer['last_name'],
                             "contact": customer['phone'],
                             "profile_pic" : customer['profile_pic'],
-                            "acive_packages" : customer['active packages'],
-                            "inacive_packages" : customer['inactive packages'],
+                            # "acive_packages" : customer['active packages'],
+                            # "inacive_packages" : customer['inactive packages'],
                             "user_type": "customer",
                             "success": True,
 
