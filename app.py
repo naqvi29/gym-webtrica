@@ -40,7 +40,7 @@ def allowed_file(filename):
 app.secret_key = '_5#y2L"F4Q8z\n\xec]/'
 
 
-#Homepage route
+# Homepage route
 @app.route("/")
 def index():
     # return render_template("home.html")
@@ -557,20 +557,7 @@ def trainersignin_api():
 
                     hash_password = user_data['hash']
                     if check_password_hash(hash_password, password):
-                        return jsonify({
-                            "email":
-                            user_data['email'],
-                            "contact person":
-                            user_data['contact_person'],
-                            "contact":
-                            user_data['phone'],
-                            "region":
-                            user_data['region'],
-                            "certificate":
-                            user_data['certificate'],
-                            "success":
-                            True,
-                        })
+                        return jsonify({"id": str(user_data['_id']), "email": user_data['email'], "contact person": user_data['contact_person'], "contact": user_data['phone'], "region": user_data['region'], "certificate": user_data['certificate'], "success": True })
                     else:
                         return jsonify({
                             "success": False,
