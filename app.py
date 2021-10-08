@@ -220,58 +220,7 @@ def trainers_data():
 
 
 # ************ FOR CUSTOMERS/USERS LOGIN ************
-@app.route("/signin-api", methods=["POST"])
-def signin_api():
-    try:
-        if request.method == "POST":
-
-            if request.is_json:
-                data = request.get_json()
-                email = data['email']
-                password = data['password']
-
-                query = {"email": email}
-                user_data = db.customers.find_one(query)
-
-                if user_data is not None:
-
-                    hash_password = user_data['hash']
-                    if check_password_hash(hash_password, password):
-                        return jsonify({
-                            "id": str(user_data['_id']),
-                            "email": user_data['email'],
-                            "first_name": user_data['first_name'],
-                            "last_name": user_data['last_name'],
-                            "contact": user_data['phone'],
-                            "profile_pic" : user_data['profile_pic'],
-                            "acive_packages" : user_data['active packages'],
-                            "inacive_packages" : user_data['inactive packages'],
-                            "success": True,
-
-                        })
-                    else:
-                        return jsonify({
-                            "success": False,
-                            "error": "Invalid Credentials"
-                        })
-                else:
-                    return jsonify({
-                        "success":
-                        False,
-                        "error":
-                        "Invalid User or user doesn't exist."
-                    })
-            else:
-                return jsonify({
-                    "success": False,
-                    "error": "Invalid request not json format."
-                })
-        else:
-            return jsonify({"success": False, "error": "Invalid request"})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
-
-
+# 
 # ************ FOR CUSTOMERS/USERS SIGNUP ************
 @app.route("/signup-api", methods=["POST"])
 def signup_api():
@@ -288,13 +237,12 @@ def signup_api():
                 first_name = request.form.get('first_name')
                 last_name = request.form.get('last_name')
                 contact = request.form.get('contact')
-                if not contact.isnumeric():
-                    return jsonify({
-                        "success": False,
-                        "error": "invalid number"
-                    })
                 profile_pic = request.files.get('profile_pic')
                 password = request.form.get('password')
+                
+                if not first_name or not last_name or not contact or not password:
+                    return jsonify({"success": False, "error": "Missing details"})
+                    
                 if profile_pic and allowed_file(profile_pic.filename):
                     filename = secure_filename(profile_pic.filename)
                     profile_pic.save(
@@ -304,9 +252,12 @@ def signup_api():
                         "success": False,
                         "error": "File not found or incorrect format"
                     })
+                    
                 query = {"email": email}
-                user_data = db.customers.find_one(query)
-                if user_data is None:
+                user_data1 = db.customers.find_one(query)
+                user_data2 = db.company.find_one(query)
+                user_data3 = db.trainers.find_one(query)
+                if user_data1 is None and user_data2 is None and user_data3 is None:
                     hash_password = generate_password_hash(password)
                     # Insert into db
                     newAccount = {
@@ -360,11 +311,6 @@ def companysignup_api():
                     "error": "invalid email"
                 })
             contact = request.form.get("contact")
-            if not contact.isnumeric():
-                return jsonify({
-                    "success": False,
-                    "error": "invalid number"
-                })
             password = request.form.get("password")
             if company_profile_pic and allowed_file(company_profile_pic.filename):
                     filename = secure_filename(company_profile_pic.filename)
@@ -381,9 +327,14 @@ def companysignup_api():
                     "success": False,
                     "error": "password doesn't match"
                 })
+            
+            if not organizational_number or not company_name or not contact_person or not region or not contact:
+                    return jsonify({"success": False, "error": "Missing details"})
             query = {"email": email}
-            user_data = db.company.find_one(query)
-            if user_data is None:
+            user_data1 = db.company.find_one(query)
+            user_data2 = db.trainers.find_one(query)
+            user_data3 = db.customers.find_one(query)
+            if user_data1 is None and user_data2 is None and user_data3 is None:
                 hash_password = generate_password_hash(password)
                 # Insert into db
                 newAccount = {
@@ -420,53 +371,6 @@ def companysignup_api():
         return jsonify({"success": False, "error": str(e)})
 
 
-# ************ FOR COMPANY LOGIN ************
-@app.route("/companysignin-api", methods=["POST"])
-def companysignin_api():
-    try:
-        if request.method == "POST":
-            if request.is_json:
-                data = request.get_json()
-                email = data['email']
-                password = data['password']
-
-                query = {"email": email}
-                user_data = db.company.find_one(query)
-
-                if user_data is not None:
-
-                    hash_password = user_data['hash']
-                    if check_password_hash(hash_password, password):
-                        return jsonify({
-                            "email": user_data['email'],
-                            "company": user_data['company_name'],
-                            "contact person": user_data['contact_person'],
-                            "contact": user_data['phone'],
-                            "company_profile_pic": user_data['company_profile_pic'],
-                            "success": True,
-                        })
-                    else:
-                        return jsonify({
-                            "success": False,
-                            "error": "Invalid Credentials"
-                        })
-                else:
-                    return jsonify({
-                        "success":
-                        False,
-                        "error":
-                        "Invalid User or user doesn't exist."
-                    })
-            else:
-                return jsonify({
-                    "success": False,
-                    "error": "Invalid request not json format."
-                })
-        else:
-            return jsonify({"success": False, "error": "Invalid request"})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
-
 
 # ************ FOR PERSONAL TRAINERS SIGNUP ************
 @app.route("/trainersignup-api", methods=["POST"])
@@ -481,8 +385,6 @@ def trainersignup_api():
             if not (re.search(regex, email)):
                 return jsonify({"success": False, "error": "invalid email"})
             contact = request.form.get('contact')
-            if not contact.isnumeric():
-                return jsonify({"success": False, "error": "invalid number"})
             password = request.form.get('password')
             confirm_password = request.form.get('confirm_password')
             if password != confirm_password:
@@ -499,10 +401,14 @@ def trainersignup_api():
                     "success": False,
                     "error": "File not found or incorrect format"
                 })
-
+            
+            if not contact_person or not region or not contact:
+                    return jsonify({"success": False, "error": "Missing details"})
             query = {"email": email}
-            user_data = db.trainers.find_one(query)
-            if user_data is None:
+            user_data1 = db.trainers.find_one(query)
+            user_data2 = db.company.find_one(query)
+            user_data3 = db.customers.find_one(query)
+            if user_data1 is None and user_data2 is None and user_data3 is None:
                 hash_password = generate_password_hash(password)
                 # Insert into db
                 newAccount = {
@@ -527,53 +433,6 @@ def trainersignup_api():
                     False,
                     "error":
                     "User already exist with this email id."
-                })
-        else:
-            return jsonify({"success": False, "error": "Invalid request"})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
-
-
-# ************ FOR PERSONAL TRAINERS LOGIN ************
-@app.route("/trainersignin-api", methods=["POST"])
-def trainersignin_api():
-    try:
-        if request.method == "POST":
-            if request.is_json:
-                data = request.get_json()
-                email = data['email']
-                regex = '[^@]+@[a-zA-Z0-9]+[.][a-zA-Z]+'
-                if not (re.search(regex, email)):
-                    return jsonify({
-                        "success": False,
-                        "error": "invalid email"
-                    })
-                password = data['password']
-
-                query = {"email": email}
-                user_data = db.trainers.find_one(query)
-
-                if user_data is not None:
-
-                    hash_password = user_data['hash']
-                    if check_password_hash(hash_password, password):
-                        return jsonify({"id": str(user_data['_id']), "email": user_data['email'], "contact person": user_data['contact_person'], "contact": user_data['phone'], "region": user_data['region'], "certificate": user_data['certificate'], "success": True })
-                    else:
-                        return jsonify({
-                            "success": False,
-                            "error": "Invalid Credentials"
-                        })
-                else:
-                    return jsonify({
-                        "success":
-                        False,
-                        "error":
-                        "Invalid User or user doesn't exist."
-                    })
-            else:
-                return jsonify({
-                    "success": False,
-                    "error": "Invalid request not json format."
                 })
         else:
             return jsonify({"success": False, "error": "Invalid request"})
@@ -614,8 +473,6 @@ def update_customer_profile_api(id):
             if not (re.search(regex, email)):
                 return jsonify({"success": False, "error": "invalid email"})
             contact = request.form.get('contact')
-            if not contact.isnumeric():
-                return jsonify({"success": False, "error": "invalid number"})
             if profile_pic and allowed_file(profile_pic.filename):
                 filename = secure_filename(profile_pic.filename)
                 profile_pic.save(
@@ -674,8 +531,87 @@ def all_customer_details():
             return jsonify({"success": False, "msg": "Invalid request method"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
-    
 
+# ************ ALL IN ONE SIGNIN ************
+@app.route("/signin-api", methods=["POST"])
+def signin_api():
+    try:
+        if request.method == "POST":
+
+            if request.is_json:
+                data = request.get_json()
+                email = data['email']
+                password = data['password']
+
+                query = {"email": email}
+                customer = db.customers.find_one(query)
+                company = db.company.find_one(query)
+                trainer = db.trainers.find_one(query)
+
+                if customer is not None:
+
+                    hash_password = customer['hash']
+                    if check_password_hash(hash_password, password):
+                        return jsonify({
+                            "id": str(customer['_id']),
+                            "email": customer['email'],
+                            "first_name": customer['first_name'],
+                            "last_name": customer['last_name'],
+                            "contact": customer['phone'],
+                            "profile_pic" : customer['profile_pic'],
+                            "acive_packages" : customer['active packages'],
+                            "inacive_packages" : customer['inactive packages'],
+                            "user_type": "customer",
+                            "success": True,
+
+                        })
+                    else:
+                        return jsonify({
+                            "success": False,
+                            "error": "Invalid Credentials"
+                        })
+                elif company is not None:
+                    hash_password = company['hash']
+                    if check_password_hash(hash_password, password):
+                        return jsonify({
+                            "email": company['email'],
+                            "company": company['company_name'],
+                            "contact person": company['contact_person'],
+                            "contact": company['phone'],
+                            "company_profile_pic": company['company_profile_pic'],
+                            "user_type": "company",
+                            "success": True,
+                        })
+                    else:
+                        return jsonify({
+                            "success": False,
+                            "error": "Invalid Credentials"
+                        })
+                elif trainer is not None:
+                    hash_password = trainer['hash']
+                    if check_password_hash(hash_password, password):
+                        return jsonify({"id": str(trainer['_id']), "email": trainer['email'], "contact person": trainer['contact_person'], "contact": trainer['phone'], "region": trainer['region'], "certificate": trainer['certificate'], "user_type": "trainer", "success": True })
+                    else:
+                        return jsonify({
+                            "success": False,
+                            "error": "Invalid Credentials"
+                        })
+                else:
+                    return jsonify({
+                        "success":
+                        False,
+                        "error":
+                        "Invalid User or user doesn't exist."
+                    })
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": "Invalid request not json format."
+                })
+        else:
+            return jsonify({"success": False, "error": "Invalid request"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
 
 
 if __name__ == '__main__':
