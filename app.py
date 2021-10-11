@@ -2,6 +2,7 @@ import re
 import os
 from os.path import join, dirname, realpath
 from sys import meta_path
+from pymongo.message import query
 from werkzeug.utils import secure_filename
 from bson import objectid
 from flask import Flask, render_template, request, url_for, jsonify, json, send_file, send_from_directory
@@ -26,11 +27,13 @@ UPLOAD_FOLDER = join(dirname(realpath(__file__)), 'static/images/certificates')
 UPLOAD_FOLDER2 = join(dirname(realpath(__file__)), 'static/images/customers/profile-pics')
 UPLOAD_FOLDER3 = join(dirname(realpath(__file__)), 'static/images/company/company-profile-pics')
 UPLOAD_FOLDER4 = join(dirname(realpath(__file__)), 'static/images/trainers/trainer-profile-pics')
-ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
+UPLOAD_FOLDER5 = join(dirname(realpath(__file__)), 'static/images/customers/mud-schemes')
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg',}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['UPLOAD_FOLDER2'] = UPLOAD_FOLDER2
 app.config['UPLOAD_FOLDER3'] = UPLOAD_FOLDER3
 app.config['UPLOAD_FOLDER4'] = UPLOAD_FOLDER4
+app.config['UPLOAD_FOLDER5'] = UPLOAD_FOLDER5
 
 
 def allowed_file(filename):
@@ -166,56 +169,6 @@ def completed_sessions():
     sessions = db.sessions.find()
     return render_template("sessions.html", sessions=sessions)
 
-
-# customers data json route
-@app.route("/customers/data")
-def customers_data():
-    # fetch from db
-    customers = db.customers.find()
-    # make json
-    list_cur = list(customers)
-    json_data = dumps(list_cur)
-    # write json into local file
-    with open('customers.json', 'w') as file:
-        file.write(json_data)
-    # return json
-    json_data = open("customers.json")
-    data = json.load(json_data)
-    return jsonify(data)
-
-
-# company data json route
-@app.route("/company/data")
-def company_data():
-    # fetch from db
-    company = db.company.find()
-    # make json
-    list_cur = list(company)
-    json_data = dumps(list_cur)
-    # write json into local file
-    with open('company.json', 'w') as file:
-        file.write(json_data)
-    # return json
-    json_data = open("company.json")
-    data = json.load(json_data)
-    return jsonify(data)
-
-
-# trainers data json route
-@app.route("/trainers/data")
-def trainers_data():
-    # fetch from db
-    trainers = db.trainers.find()
-    # make json
-    list_cur = list(trainers)
-    json_data = dumps(list_cur)
-    # write json into local file
-    with open('trainers.json', 'w') as file:
-        file.write(json_data)
-    # return json
-    json_data = open("trainers.json")
-    data = json.load(json_data)
-    return jsonify(data)
 
 
 ################################################ API START ##########################################################
@@ -380,7 +333,30 @@ def trainersignup_api():
             last_name = request.form.get('last_name')
             region = request.form.get('region')
             email = request.form.get('email').lower()
-            certificate = request.files.get('certificate')
+            certificates = request.files.getlist("certificate")
+            filenames = []
+            for certificate in certificates:
+                if certificate and allowed_file(certificate.filename):
+                    filename = secure_filename(certificate.filename)
+                    print (filename)
+                    certificate.save(
+                        os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    filename=filenames.append(filename)  
+                else:
+                    return jsonify({
+                        "success": False,
+                        "error": "Certificate not found or incorrect format"
+                    })
+            trainer_profile_pic = request.files.get('trainer_profile_pic')
+            if trainer_profile_pic and allowed_file(trainer_profile_pic.filename):
+                    filename2 = secure_filename(trainer_profile_pic.filename)
+                    trainer_profile_pic.save(
+                        os.path.join(app.config['UPLOAD_FOLDER4'], filename2))
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": "Profile Picture not found or incorrect format"
+                })
             regex = '[^@]+@[a-zA-Z0-9]+[.][a-zA-Z]+'
             if not (re.search(regex, email)):
                 return jsonify({"success": False, "error": "invalid email"})
@@ -392,15 +368,7 @@ def trainersignup_api():
                     "success": False,
                     "error": "password doesn't match"
                 })
-            if certificate and allowed_file(certificate.filename):
-                filename = secure_filename(certificate.filename)
-                certificate.save(
-                    os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            else:
-                return jsonify({
-                    "success": False,
-                    "error": "File not found or incorrect format"
-                })
+            
             
             if not first_name or not last_name or not region or not contact:
                     return jsonify({"success": False, "error": "Missing details"})
@@ -419,8 +387,9 @@ def trainersignup_api():
                     "phone": contact,
                     "password": password,
                     "hash": hash_password,
-                    "region": region,
-                    "certificate": filename
+                    "region": region,                    
+                    "profile_pic": filename2,
+                    "certificate": filenames,
                 }
                 db.trainers.insert_one(newAccount)
                 return jsonify({
@@ -449,13 +418,30 @@ def trainersignup_api():
 def alltrainerdetails_api():
     try:
         if request.method == "GET":
-            trainersdata = db.trainers.find({}, {"password": 0, "hash": 0})
+            trainersdata = db.trainers.find({"status":"activated"}, {"password": 0, "hash": 0})
             lists = []
             for i in trainersdata:
                 i.update({"_id": str(i["_id"])})
                 lists.append(i)
                 print(lists, "hello")
             return jsonify({"success": True, "trainersdata": lists})
+        else:
+            return jsonify({"success": False, "msg": "Invalid request method"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+# ************ FOR ALL CUSTOMERS/USERS DETAILS ************
+@app.route("/all-customers-details-api", methods=["GET"])
+def all_customer_details():
+    try:
+        if request.method == "GET":
+            customers_data = db.customers.find({}, {"password": 0, "hash": 0})
+            lists = []
+            for i in customers_data:
+                i.update({"_id": str(i["_id"])})
+                lists.append(i)
+                print(lists)
+            return jsonify({"success": True, "customers data": lists})
         else:
             return jsonify({"success": False, "msg": "Invalid request method"})
     except Exception as e:
@@ -589,25 +575,6 @@ def update_trainer_profile_api(id):
         return jsonify({"success": False, "error": str(e)})
 
 
-
-# ************ FOR ALL CUSTOMERS/USERS DETAILS ************
-@app.route("/all-customers-details-api", methods=["GET"])
-def all_customer_details():
-    try:
-        if request.method == "GET":
-            customers_data = db.customers.find({}, {"password": 0, "hash": 0})
-            lists = []
-            for i in customers_data:
-                i.update({"_id": str(i["_id"])})
-                lists.append(i)
-                print(lists)
-            return jsonify({"success": True, "customers data": lists})
-        else:
-            return jsonify({"success": False, "msg": "Invalid request method"})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
-
-
 # ************ ALL IN ONE SIGNIN ************
 @app.route("/signin-api", methods=["POST"])
 def signin_api():
@@ -637,6 +604,14 @@ def signin_api():
                             "profile_pic" : customer['profile_pic'],
                             "profile_pic_path": "static/images/customers/profile-pics",
                             "user_type": "customer",
+                            "mud_scheme": customer['mud_scheme'],
+                            "mud_scheme_path": "static/images/customers/mud-schemes",
+                            "today": customer['today'],
+                            "goals": customer['goals'],
+                            "active packages": customer['active packages'],
+                            "inactive packages": customer['inactive packages'],
+                            "notes": customer['notes'],
+
                             "success": True,
 
                         })
@@ -679,6 +654,7 @@ def signin_api():
                                         "certificate": trainer['certificate'],
                                         "trainer-profile-pic": trainer['profile_pic'],
                                         "profile_pic_path": "static/images/trainers/trainer-profile-pics",
+                                        "certificate_path": "static/images/certificates",
                                         "user_type": "trainer", 
                                         "success": True })
                     else:
@@ -719,6 +695,63 @@ def trainer_package_api(id):
             else:
                 return jsonify({
                     "success": False, "error": "Invalid User."
+                })
+        else:
+            return jsonify({"success": False, "error": "Invalid request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+# ************ BOOKINGS FOR CUSTOMER ************
+@app.route("/customer-bookings-api/<string:id>")
+def customer_bookings(id):
+    try:
+        if request.method == "GET":
+            query = {'customer_id': id} 
+            booking_data = db.bookings.find(query)
+            lists = []
+            for i in booking_data:
+                i.update({"_id": str(i["_id"])})
+                lists.append(i)
+                print(lists)
+            booking_data = db.bookings.find(query)
+            if booking_data is not None:
+                return jsonify({
+                    "booking_data": lists,
+                    "success": True,
+                })
+            else:
+                return jsonify({
+                    "success": False, "error": "Invalid Booking."
+                })
+        else:
+            return jsonify({"success": False, "error": "Invalid request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+# ************ BOOKINGS FOR TRAINERS ************
+@app.route("/trainer-bookings-api/<string:id>")
+def trainer_bookings(id):
+    try:
+        if request.method == "GET":
+            query = {'trainer_id': id} 
+            booking_data = db.bookings.find(query)
+            lists = []
+            for i in booking_data:
+                i.update({"_id": str(i["_id"])})
+                lists.append(i)
+                print(lists)
+            booking_data = db.bookings.find(query)
+            if booking_data is not None:
+                return jsonify({
+                    "booking_data": lists,
+                    "success": True,
+                })
+            else:
+                return jsonify({
+                    "success": False, "error": "Invalid Booking."
                 })
         else:
             return jsonify({"success": False, "error": "Invalid request"})
