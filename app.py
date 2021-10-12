@@ -1,5 +1,5 @@
 import re
-import os
+import os, sys
 from os.path import join, dirname, realpath
 from sys import meta_path
 from pymongo.message import query
@@ -12,6 +12,7 @@ from bson.objectid import ObjectId
 from bson.json_util import dumps
 from werkzeug.utils import redirect
 from werkzeug.security import generate_password_hash, check_password_hash
+from PIL import Image
 
 app = Flask(__name__)
 
@@ -57,56 +58,6 @@ def index():
 def dashboard():
     return render_template("dashboard.html")
 
-
-# Edit accounts route
-@app.route('/edit/<cat>-<id>', methods=['GET', 'POST'])
-def edit(cat, id):
-    if request.method == 'GET':
-        # fetch data which will edit
-        query = {'_id': ObjectId(id)}
-        edit = db[cat].find_one(query)
-        return render_template("edit.html", edit=edit, cat=cat, id=id)
-    else:
-        email = request.form.get("email")
-        phone = request.form.get("phone")
-        password = request.form.get("password")
-        # Replace Updated data in database
-        newvalues = {
-            "$set": {
-                'email': email,
-                'phone': phone,
-                'password': password
-            }
-        }
-        filter = {'_id': ObjectId(id)}
-        db[cat].update_one(filter, newvalues)
-        return redirect(url_for(cat))
-
-
-# Delete accounts route
-@app.route('/delete/<cat>-<id>')
-def delete(cat, id):
-    # delete data
-    query = {'_id': ObjectId(id)}
-    db[cat].delete_one(query)
-    return redirect(url_for(cat))
-
-
-# View new signedin accounts route
-@app.route('/newaccounts')
-def newaccounts():
-    # fetch recent 2 documents from customers collection
-    customers = db.customers.find().sort('_id', -1).limit(2)
-    # fetch recent 2 documents from company collection
-    company = db.company.find().sort('_id', -1).limit(2)
-    # fetch recent 2 documents from trainers collection
-    trainers = db.trainers.find().sort('_id', -1).limit(2)
-    return render_template("newaccounts.html",
-                           customers=customers,
-                           company=company,
-                           trainers=trainers)
-
-
 # View customers route
 @app.route('/customers')
 def customers():
@@ -131,13 +82,133 @@ def trainers():
     return render_template("trainers.html", trainers=trainers)
 
 
+# Edit accounts route **not using**
+@app.route('/edit/<cat>-<id>', methods=['GET', 'POST'])
+def edit(cat, id):
+    if request.method == 'GET':
+        # fetch data which will edit
+        query = {'_id': ObjectId(id)}
+        edit = db[cat].find_one(query)
+        return render_template("edit.html", edit=edit, cat=cat, id=id)
+    else:
+        email = request.form.get("email")
+        phone = request.form.get("phone")
+        password = request.form.get("password")
+        # Replace Updated data in database
+        newvalues = {
+            "$set": {
+                'email': email,
+                'phone': phone,
+                'password': password
+            }
+        }
+        filter = {'_id': ObjectId(id)}
+        db[cat].update_one(filter, newvalues)
+        return redirect(url_for(cat))
+
+# Edit customer accounts route
+@app.route('/edit/customers/<id>', methods=['GET', 'POST'])
+def editcustomers(id):
+    if request.method == 'GET':
+        # fetch customer data which will edit
+        query = {'_id': ObjectId(id)}
+        edit = db.customers.find_one(query)
+        return render_template("editcustomers.html", edit=edit, id=id)
+    else:
+        first_name = request.form.get("first_name")
+        last_name = request.form.get("last_name")
+        email = request.form.get("email")
+        phone = request.form.get("phone")
+        active_packages = request.form.get("active_packages")
+        inactive_packages = request.form.get("inacive_packages")
+        goals = request.form.get("goals")
+        today = request.form.get("today")
+        password = request.form.get("password")
+        # Replace Updated data in database
+        newvalues = {
+            "$set": {
+                'email': email,
+                'first_name': first_name,
+                'last_name': last_name,
+                'phone': phone,
+                'active_packages': active_packages,
+                'inactive_packages': inactive_packages,
+                'goals': goals,
+                'today': today,
+                'password': password
+            }
+        }
+        filter = {'_id': ObjectId(id)}
+        db.customers.update_one(filter, newvalues)
+        return redirect(url_for('customers')) 
+
+# Edit company accounts route
+@app.route('/edit/company/<id>', methods=['GET', 'POST'])
+def editcompany(id):
+    if request.method == 'GET':
+        # fetch customer data which will edit
+        query = {'_id': ObjectId(id)}
+        edit = db.company.find_one(query)
+        return render_template("editcompany.html", edit=edit, id=id)
+    else:
+        organizational_number = request.form.get("organizational_number")
+        company_name = request.form.get("company_name")
+        contact_person = request.form.get("contact_person")
+        email = request.form.get("email")
+        phone = request.form.get("phone")
+        region = request.form.get("region")
+        password = request.form.get("password")
+        # Replace Updated data in database
+        newvalues = {
+            "$set": {
+                'organizational_number': organizational_number,
+                'company_name': company_name,
+                'contact_person': contact_person,
+                'email': email,
+                'phone': phone,
+                'region': region,
+                'password': password
+            }
+        }
+        filter = {'_id': ObjectId(id)}
+        db.company.update_one(filter, newvalues)
+        return redirect(url_for('company')) 
+
+
+# All in one Delete accounts route
+@app.route('/delete/<cat>-<id>')
+def delete(cat, id):
+    # delete data
+    query = {'_id': ObjectId(id)}
+    db[cat].delete_one(query)
+    return redirect(url_for(cat))
+
+
+# View new signedin accounts route
+@app.route('/newaccounts')
+def newaccounts():
+    # fetch recent 2 documents from customers collection
+    customers = db.customers.find().sort('_id', -1).limit(2)
+    # fetch recent 2 documents from company collection
+    company = db.company.find().sort('_id', -1).limit(2)
+    # fetch recent 2 documents from trainers collection
+    trainers = db.trainers.find().sort('_id', -1).limit(2)
+    return render_template("newaccounts.html",
+                           customers=customers,
+                           company=company,
+                           trainers=trainers)
+
+
+
+
+
 # route for view trainer's certificate
 @app.route('/certificate/<certificatename>')
 def viewcertificate(certificatename):
     return render_template('certificate.html', certificatename=certificatename)
 
 
-# Add new account route
+# Add new account route **unused**
 @app.route('/addnew/<cat>', methods=['GET', 'POST'])
 def addnew(cat):
     if request.method == 'POST':
@@ -160,6 +231,90 @@ def addnew(cat):
         return redirect(url_for(cat))
     else:
         return render_template('addnew.html', cat=cat)
+
+# Add new customer account route
+@app.route('/addnew/customer', methods=['GET', 'POST'])
+def addnewcustomer():
+    if request.method == 'POST':
+        first_name = request.form.get("first_name")
+        last_name = request.form.get("last_name")
+        email = request.form.get("email")
+        phone = request.form.get("phone")        
+        password = request.form.get("password")
+        hash_password = generate_password_hash(password)
+        profile_pic = request.files["profile_pic"]
+
+        if profile_pic and allowed_file(profile_pic.filename):
+            filename = secure_filename(profile_pic.filename)
+            profile_pic.save(
+                os.path.join(app.config['UPLOAD_FOLDER2'], filename))
+            # compress image
+            newimage = Image.open(os.path.join(app.config['UPLOAD_FOLDER2'], str(filename)))
+            newimage.thumbnail((400, 400))
+            newimage.save(os.path.join(UPLOAD_FOLDER2, str(filename)), quality=95)
+        else:
+            return jsonify({
+                "success": False,
+                "error": "File not found or incorrect format"
+            })
+        # Insert into db
+        newAccount = {
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": email,
+            "phone": phone,
+            "profile_pic": filename,
+            "password": password,
+            "hash": hash_password
+        }
+        db.customers.insert_one(newAccount)
+        return redirect(url_for('customers'))
+    else:
+        return render_template('addnewcustomer.html')
+
+# Add new company account route
+@app.route('/addnew/company', methods=['GET', 'POST'])
+def addnewcompany():
+    if request.method == 'POST':
+        organizational_number = request.form.get("organizational_number")
+        company_name = request.form.get("company_name")
+        contact_person = request.form.get("contact_person")
+        email = request.form.get("email")
+        phone = request.form.get("phone")        
+        region = request.form.get("region")        
+        password = request.form.get("password")
+        hash_password = generate_password_hash(password)
+        profile_pic = request.files["profile_pic"]
+
+        if profile_pic and allowed_file(profile_pic.filename):
+            filename = secure_filename(profile_pic.filename)
+            profile_pic.save(
+                os.path.join(app.config['UPLOAD_FOLDER3'], filename))
+            # compress image
+            newimage = Image.open(os.path.join(app.config['UPLOAD_FOLDER3'], str(filename)))
+            newimage.thumbnail((400, 400))
+            newimage.save(os.path.join(UPLOAD_FOLDER3, str(filename)), quality=95)
+        else:
+            return jsonify({
+                "success": False,
+                "error": "File not found or incorrect format"
+            })
+        # Insert into db
+        newAccount = {
+            "organizational_number": organizational_number,
+            "company_name": company_name,
+            "contact_person": contact_person,
+            "email": email,
+            "phone": phone,
+            "region": region,
+            "company_profile_pic": filename,
+            "password": password,
+            "hash": hash_password
+        }
+        db.company.insert_one(newAccount)
+        return redirect(url_for('company'))
+    else:
+        return render_template('addnewcompany.html')
 
 
 # View completed sessions route
@@ -199,6 +354,10 @@ def signup_api():
                     filename = secure_filename(profile_pic.filename)
                     profile_pic.save(
                         os.path.join(app.config['UPLOAD_FOLDER2'], filename))
+                    # compress image
+                    newimage = Image.open(os.path.join(app.config['UPLOAD_FOLDER2'], str(filename)))
+                    newimage.thumbnail((400, 400))
+                    newimage.save(os.path.join(UPLOAD_FOLDER2, str(filename)), quality=95)
                 else:
                     return jsonify({
                         "success": False,
@@ -268,6 +427,10 @@ def companysignup_api():
                     filename = secure_filename(company_profile_pic.filename)
                     company_profile_pic.save(
                         os.path.join(app.config['UPLOAD_FOLDER3'], filename))
+                    # compress image
+                    newimage = Image.open(os.path.join(app.config['UPLOAD_FOLDER3'], str(filename)))
+                    newimage.thumbnail((400, 400))
+                    newimage.save(os.path.join(UPLOAD_FOLDER3, str(filename)), quality=95)
             else:
                 return jsonify({
                     "success": False,
@@ -352,6 +515,10 @@ def trainersignup_api():
                     filename2 = secure_filename(trainer_profile_pic.filename)
                     trainer_profile_pic.save(
                         os.path.join(app.config['UPLOAD_FOLDER4'], filename2))
+                    # compress image
+                    newimage = Image.open(os.path.join(app.config['UPLOAD_FOLDER4'], str(filename2)))
+                    newimage.thumbnail((400, 400))
+                    newimage.save(os.path.join(UPLOAD_FOLDER4, str(filename2)), quality=95)
             else:
                 return jsonify({
                     "success": False,
@@ -466,6 +633,10 @@ def update_customer_profile_api(id):
                 filename = secure_filename(profile_pic.filename)
                 profile_pic.save(
                     os.path.join(app.config['UPLOAD_FOLDER2'], filename))
+                # compress image
+                newimage = Image.open(os.path.join(app.config['UPLOAD_FOLDER2'], str(filename)))
+                newimage.thumbnail((400, 400))
+                newimage.save(os.path.join(UPLOAD_FOLDER2, str(filename)), quality=95)
             else:
                 return jsonify({
                     "success": False,
@@ -528,6 +699,10 @@ def update_trainer_profile_api(id):
                 filename = secure_filename(profile_pic.filename)
                 profile_pic.save(
                     os.path.join(app.config['UPLOAD_FOLDER4'], filename))
+                # compress image
+                newimage = Image.open(os.path.join(app.config['UPLOAD_FOLDER4'], str(filename)))
+                newimage.thumbnail((400, 400))
+                newimage.save(os.path.join(UPLOAD_FOLDER4, str(filename)), quality=95)
             else:
                 return jsonify({
                     "success": False,
@@ -758,6 +933,24 @@ def trainer_bookings(id):
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
+
+# ************ GYMS DETAILS ************
+@app.route("/all-gym-details-api", methods=["GET"])
+def all_gym_details():
+    try:
+        if request.method == "GET":
+            gym_data = db.gyms.find()
+            lists = []
+            for i in gym_data:
+                i.update({"_id": str(i["_id"])})
+                lists.append(i)
+                print(lists)
+            return jsonify({"success": True, "gyms data": lists})
+        else:
+            return jsonify({"success": False, "msg": "Invalid request method"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
 
 if __name__ == '__main__':
     app.run(debug=True)

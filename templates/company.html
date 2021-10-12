@@ -44,6 +44,7 @@
                   <th>Phone Number</th>
                   <th>Password</th>
                   <th>Region</th>
+                  <th>Profile Picture</th>
                   <th>Edit</th>
                   <th>Delete</th>
                 </tr>
@@ -58,7 +59,8 @@
                   <td>{{ company.phone }}</td>
                   <td>{{ company.password }}</td>
                   <td>{{ company.region }}</td>
-                  <td><a href="/edit/company-{{ company._id }}"><button type="button"
+                  <td><a href="static/images/company/company-profile-pics/{{company.company_profile_pic}}">{{company.company_profile_pic}}</a></td>
+                  <td><a href="/edit/company/{{ company._id }}"><button type="button"
                         class="btn-outline-info btn-sm btn-block">edit</button>
                     </a>
                   </td>

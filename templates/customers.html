@@ -3,7 +3,7 @@
 {% block head %}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AdminLTE 3 | DataTables</title>
+<title>Customers | Accounts</title>
 
 <!-- Google Font: Source Sans Pro -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -28,7 +28,7 @@
         <div class="card">
           <div class="card-header">
             <div class="add">
-              <a href="/addnew/customers"><button class="btn-outline-success btn-sm">Add a new customer</button></a>
+              <a href="/addnew/customer"><button class="btn-outline-success btn-sm">Add a new customer</button></a>
             </div>
 
           </div>
@@ -42,6 +42,11 @@
                   <th>Email</th>
                   <th>Phone Number</th>
                   <th>Password</th>
+                  <th>Profile Picture</th>
+                  <th>Active Packages</th>
+                  <th>Inactive Packages</th>
+                  <th>Goals</th>
+                  <th>Today</th>
                   <th>Edit</th>
                   <th>Delete</th>
                 </tr>
@@ -54,7 +59,12 @@
                   <td>{{ customers.email }}</td>
                   <td>{{ customers.phone }}</td>
                   <td>{{ customers.password }}</td>
-                  <td><a href="/edit/customers-{{ customers._id }}"><button type="button"
+                  <td><a href="static/images/customers/profile-pics/{{customers.profile_pic}}">{{customers.profile_pic}}</a></td>
+                  <td>{{ customers.active_packages }}</td>
+                  <td>{{ customers.inactive_packages }}</td>
+                  <td>{{ customers.goals }}</td>
+                  <td>{{ customers.today }}</td>
+                  <td><a href="/edit/customers/{{ customers._id }}"><button type="button"
                         class="btn-outline-info btn-sm btn-block">edit</button>
                     </a>
                   </td>
