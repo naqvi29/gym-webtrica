@@ -546,7 +546,6 @@ def trainersignup_api():
                 hash_password = generate_password_hash(password)
                 # Insert into db
                 newAccount = {
-                    # "contact_person": contact_person,
                     "first_name": first_name,
                     "last_name": last_name,
                     "email": email,
@@ -555,9 +554,14 @@ def trainersignup_api():
                     "hash": hash_password,
                     "region": region,                    
                     "profile_pic": filename2,
-                    "certificate": filenames,
                 }
                 db.trainers.insert_one(newAccount)
+                for filename in filenames:
+                    newCertificates = {
+                        "certificate": filename,
+                        "trainer_email": email  
+                    }
+                    db.certificates.insert_one(newCertificates)
                 return jsonify({
                     "email": email,
                     "first_name": first_name,
@@ -627,53 +631,77 @@ def update_customer_profile_api(id):
             regex = '[^@]+@[a-zA-Z0-9]+[.][a-zA-Z]+'
             if not (re.search(regex, email)):
                 return jsonify({"success": False, "error": "invalid email"})
-            if profile_pic and allowed_file(profile_pic.filename):
-                filename = secure_filename(profile_pic.filename)
-                profile_pic.save(
-                    os.path.join(app.config['UPLOAD_FOLDER2'], filename))
-                # compress image
-                newimage = Image.open(os.path.join(app.config['UPLOAD_FOLDER2'], str(filename)))
-                newimage.thumbnail((400, 400))
-                newimage.save(os.path.join(UPLOAD_FOLDER2, str(filename)), quality=95)
-            else:
-                return jsonify({
-                    "success": False,
-                    "error": "File not found or incorrect format"
-                })
             if not first_name or not last_name or not contact or not password:
                     return jsonify({"success": False, "error": "Missing details"})
-
-            query = {'_id': ObjectId(id)}
-            user_data = db.customers.find_one(query)
-            if user_data is not None:
-                hash_password = generate_password_hash(password)
-                # Insert into db #
-                newData = {'$set':{"first_name":first_name,
-                    "last_name": last_name,
-                    "email": email,
-                    "phone": contact,
-                    "password": password,
-                    "hash": hash_password,
-                    "profile_pic": filename }}
-                db.customers.update_one(user_data,newData)
-                # db.trainers.insert_one(newAccount)
-                return jsonify({
-                    "id": str(user_data['_id']),
-                    "first_name": first_name,
-                    "last_name": last_name,
-                    "email": email,
-                    "contact": contact,
-                    "profile_pic": filename,
-                    "user_type": "customer",
-                    "success": True,
-                })
+            if profile_pic:
+                if allowed_file(profile_pic.filename):
+                    filename = secure_filename(profile_pic.filename)
+                    profile_pic.save(
+                        os.path.join(app.config['UPLOAD_FOLDER2'], filename))
+                    # compress image
+                    newimage = Image.open(os.path.join(app.config['UPLOAD_FOLDER2'], str(filename)))
+                    newimage.thumbnail((400, 400))
+                    newimage.save(os.path.join(UPLOAD_FOLDER2, str(filename)), quality=95)
+                    query = {'_id': ObjectId(id)}
+                    user_data = db.customers.find_one(query)
+                    if user_data is not None:
+                        hash_password = generate_password_hash(password)
+                        # Insert into db #
+                        newData = {'$set':{"first_name":first_name,
+                            "last_name": last_name,
+                            "email": email,
+                            "phone": contact,
+                            "password": password,
+                            "hash": hash_password,
+                            "profile_pic": filename }}
+                        db.customers.update_one(user_data,newData)
+                        return jsonify({
+                            "id": str(user_data['_id']),
+                            "first_name": first_name,
+                            "last_name": last_name,
+                            "email": email,
+                            "contact": contact,
+                            "profile_pic": filename,
+                            "user_type": "customer",
+                            "success": True,
+                        })
+                    else:
+                        return jsonify({
+                            "success": False, "error": "Invalid User."
+                        })
+                else:
+                    return jsonify({
+                        "success": False, "error":"Invalid Profile picture format"
+                    })
             else:
-                return jsonify({
-                    "success": False, "error": "Invalid User."
-                })
+                query = {'_id': ObjectId(id)}
+                user_data = db.customers.find_one(query)
+                if user_data is not None:
+                    hash_password = generate_password_hash(password)
+                    # Insert into db #
+                    newData = {'$set':{"first_name":first_name,
+                        "last_name": last_name,
+                        "email": email,
+                        "phone": contact,
+                        "password": password,
+                        "hash": hash_password, }}
+                    db.customers.update_one(user_data,newData)
+                    # db.trainers.insert_one(newAccount)
+                    return jsonify({
+                        "id": str(user_data['_id']),
+                        "first_name": first_name,
+                        "last_name": last_name,
+                        "email": email,
+                        "contact": contact,
+                        "user_type": "customer",
+                        "success": True,
+                    })
+                else:
+                    return jsonify({
+                        "success": False, "error": "Invalid User."
+                    })            
         else:
             return jsonify({"success": False, "error": "Invalid request"})
-
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
@@ -682,7 +710,6 @@ def update_customer_profile_api(id):
 def update_trainer_profile_api(id):
     try:
         if request.method == "POST":
-            # contact_person = request.form.get('contact_person')
             first_name = request.form.get('first_name')
             last_name = request.form.get('last_name')
             email = request.form.get('email')
@@ -693,54 +720,82 @@ def update_trainer_profile_api(id):
             regex = '[^@]+@[a-zA-Z0-9]+[.][a-zA-Z]+'
             if not (re.search(regex, email)):
                 return jsonify({"success": False, "error": "invalid email"})
-            if profile_pic and allowed_file(profile_pic.filename):
-                filename = secure_filename(profile_pic.filename)
-                profile_pic.save(
-                    os.path.join(app.config['UPLOAD_FOLDER4'], filename))
-                # compress image
-                newimage = Image.open(os.path.join(app.config['UPLOAD_FOLDER4'], str(filename)))
-                newimage.thumbnail((400, 400))
-                newimage.save(os.path.join(UPLOAD_FOLDER4, str(filename)), quality=95)
-            else:
-                return jsonify({
-                    "success": False,
-                    "error": "File not found or incorrect format"
-                })
             if not first_name or not last_name or not contact or not password or not bio:
                     return jsonify({"success": False, "error": "Missing details"})
-
-            query = {'_id': ObjectId(id)}
-            user_data = db.trainers.find_one(query)
-            if user_data is not None:
-                hash_password = generate_password_hash(password)
-                # Insert into db #
-                newData = {'$set':{
-                    # "contact_person":contact_person,
-                    "first_name": first_name,
-                    "last_name": last_name,
-                    "email": email,
-                    "phone": contact,
-                    "bio": bio,
-                    "password": password,
-                    "hash": hash_password,
-                    "profile_pic": filename
-                    }}
-                db.trainers.update_one(user_data,newData)
-                return jsonify({
-                    "id": str(user_data['_id']),
-                    # "contact_person":contact_person,
-                    "first_name":first_name,
-                    "last_name":last_name,
-                    "email": email,
-                    "contact": contact,
-                    "profile_pic": filename,
-                    "user_type": "trainer",
-                    "success": True,
-                })
+            if profile_pic:
+                if allowed_file(profile_pic.filename):
+                    filename = secure_filename(profile_pic.filename)
+                    profile_pic.save(
+                        os.path.join(app.config['UPLOAD_FOLDER4'], filename))
+                    # compress image
+                    newimage = Image.open(os.path.join(app.config['UPLOAD_FOLDER4'], str(filename)))
+                    newimage.thumbnail((400, 400))
+                    newimage.save(os.path.join(UPLOAD_FOLDER4, str(filename)), quality=95)
+                    query = {'_id': ObjectId(id)}
+                    user_data = db.trainers.find_one(query)
+                    if user_data is not None:
+                        hash_password = generate_password_hash(password)
+                        # Insert into db #
+                        newData = {'$set':{
+                            # "contact_person":contact_person,
+                            "first_name": first_name,
+                            "last_name": last_name,
+                            "email": email,
+                            "phone": contact,
+                            "bio": bio,
+                            "password": password,
+                            "hash": hash_password,
+                            "profile_pic": filename
+                            }}
+                        db.trainers.update_one(user_data,newData)
+                        return jsonify({
+                            "id": str(user_data['_id']),
+                            "first_name":first_name,
+                            "last_name":last_name,
+                            "email": email,
+                            "contact": contact,
+                            "profile_pic": filename,
+                            "user_type": "trainer",
+                            "success": True,
+                        })
+                    else:
+                        return jsonify({
+                            "success": False, "error": "Invalid User."
+                        })
+                else:
+                    return jsonify({
+                        "success": False, "error": "invalid profile picture format"
+                    })
             else:
-                return jsonify({
-                    "success": False, "error": "Invalid User."
-                })
+                query = {'_id': ObjectId(id)}
+                user_data = db.trainers.find_one(query)
+                if user_data is not None:
+                    hash_password = generate_password_hash(password)
+                    # Insert into db #
+                    newData = {'$set':{
+                        # "contact_person":contact_person,
+                        "first_name": first_name,
+                        "last_name": last_name,
+                        "email": email,
+                        "phone": contact,
+                        "bio": bio,
+                        "password": password,
+                        "hash": hash_password
+                        }}
+                    db.trainers.update_one(user_data,newData)
+                    return jsonify({
+                        "id": str(user_data['_id']),
+                        "first_name":first_name,
+                        "last_name":last_name,
+                        "email": email,
+                        "contact": contact,
+                        "user_type": "trainer",
+                        "success": True,
+                    })
+                else:
+                    return jsonify({
+                        "success": False, "error": "Invalid User."
+                    })
         else:
             return jsonify({"success": False, "error": "Invalid request"})
 
@@ -861,13 +916,15 @@ def signin_api():
                                         "first_name": trainer['first_name'],
                                         "last_name": trainer['last_name'],
                                         "contact": trainer['phone'],
-                                        "region": trainer['region'], 
-                                        "certificate": trainer['certificate'],
+                                        "region": trainer['region'],
                                         "trainer-profile-pic": trainer['profile_pic'],
                                         "status": trainer['status'],
                                         "bio": trainer['bio'],
+                                        "today": trainer['today'],
+                                        "goals": trainer['goals'],
+                                        "notes": trainer['notes'],
+                                        "available_dates": trainer['available_dates'],
                                         "profile_pic_path": "static/images/trainers/trainer-profile-pics",
-                                        "certificate_path": "static/images/certificates",
                                         "user_type": "trainer",
                                         "good_to_know":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae aperiam consectetur deserunt officiis quos soluta autem placeat labore fuga, pariatur voluptatem odit similique quibusdam natus, hic exercitationem quisquam velit delectus.", 
                                         "success": True })
@@ -990,6 +1047,138 @@ def all_gym_details():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
+
+# ************ GET TRAINER CERTIFICATES ************
+@app.route("/get-trainer-certificates-api/<id>", methods=["GET"])
+def get_trainer_certificates(id):
+    try:
+        if request.method == "GET":
+            # fetch trainer email from trainers table
+            query = {'_id': ObjectId(id)}
+            user_data = db.trainers.find_one(query)
+            if user_data is not None:
+                # fetch all certificates registered with trainer email 
+                query = {'trainer_email': user_data['email']}
+                certificate_data = db.certificates.find(query)
+                lists = []
+                # for loop
+                for i in certificate_data:
+                    i.update({"_id": str(i["_id"])})
+                    lists.append(i)
+                    print(lists, "hello")
+                return jsonify({"success": True, "certificates": lists, "certificate_path": "static/images/certificates"})
+                # end forloop
+            else:
+                return jsonify({
+                    "success": False, "error": "Invalid User."
+                })
+        else:
+            return jsonify({"success": False, "error": "Invalid request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+# ************ ADD NEW TRAINER CERTIFICATE ************
+@app.route("/add-new-trainer-certificate-api/<id>", methods=["POST"])
+def add_new_trainer_certificate(id):
+    try:
+        if request.method == "POST":
+            certificates = request.files.getlist("certificate")
+            filenames = []
+            for certificate in certificates:
+                if certificate and allowed_file(certificate.filename):
+                    filename = secure_filename(certificate.filename)
+                    print (filename)
+                    certificate.save(
+                        os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    filename=filenames.append(filename)  
+                else:
+                    return jsonify({
+                        "success": False,
+                        "error": "Certificate not found or incorrect format"
+                    })
+            query = {'_id': ObjectId(id)}
+            user_data = db.trainers.find_one(query)
+            if user_data is not None:
+                # get trainer's email from trainers table 
+                query = {'trainer_email': user_data['email']}
+                for filename in filenames:
+                    newCertificates = {
+                        "certificate": filename,
+                        "trainer_email": user_data['email']  
+                    }
+                    db.certificates.insert_one(newCertificates)        
+
+                return jsonify({
+                    "id": str(user_data['_id']),
+                    "certificates added": filenames,
+                    "success": True,
+                })
+            else:
+                return jsonify({
+                    "success": False, "error": "Invalid User."
+                })
+        else:
+            return jsonify({"success": False, "error": "Invalid request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+# ************ DELETE TRAINER CERTIFICATE ************
+@app.route("/delete-trainer-certificate-api/<id>")
+def delete_trainer_certificate(id):
+    try:
+        if request.method == "GET":
+            query = {'_id': ObjectId(id)}
+            certificate_data = db.certificates.find_one(query)
+            if certificate_data:
+                db.certificates.delete_one(query)
+                return jsonify({"success": True,})
+            else:
+                return jsonify({"success": False, "error": "Certificate doesn't exist"})
+        else:
+            return jsonify({"success": False, "error": "Invalid request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+# ************ FOR UPDATE TRAINER STATS************
+@app.route("/update-trainer-stats-api/<id>", methods=["POST"])
+def update_trainer_stats_api(id):
+    try:
+        if request.method == 'POST':      
+            if request.is_json:            
+                data = request.get_json()
+                today = data["today"]
+                goals = data["goals"]
+                notes = data["notes"]
+                if not today or not goals or not notes:
+                        return jsonify({"success": False, "error": "Missing details"})
+
+                query = {'_id': ObjectId(id)}
+                user_data = db.trainers.find_one(query)
+                if user_data is not None:
+                    # Insert into db #
+                    newData = {'$set':{"today":today,
+                        "goals": goals,
+                        "notes": notes }}
+                    db.trainers.update_one(user_data,newData)
+                    return jsonify({    
+                        "id": str(user_data['_id']),
+                        "success": True,
+                    })
+                else:
+                    return jsonify({
+                        "success": False, "error": "Invalid User."
+                    })
+            else:
+                return jsonify({"success": False, "msg": "Invalid data format"})
+        else:
+            return jsonify({"success": False, "msg": "Invalid request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
 
 if __name__ == '__main__':
     app.run(debug=True)
