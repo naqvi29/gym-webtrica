@@ -326,7 +326,7 @@ def completed_sessions():
 
 
 
-################################################ API START ##########################################################
+################################################ MOBILE API'S START ##########################################################
  
 # ************ FOR CUSTOMERS/USERS SIGNUP ************
 @app.route("/signup-api", methods=["POST"])
@@ -491,7 +491,6 @@ def companysignup_api():
 def trainersignup_api():
     try:
         if request.method == "POST":
-            # contact_person = request.form.get('contact_person')
             first_name = request.form.get('first_name')
             last_name = request.form.get('last_name')
             region = request.form.get('region')
@@ -563,7 +562,6 @@ def trainersignup_api():
                     "email": email,
                     "first_name": first_name,
                     "last_name": last_name,
-                    # "contact_person": contact_person,
                     "contact": contact,
                     "success": True,
                 })
@@ -749,6 +747,43 @@ def update_trainer_profile_api(id):
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
+# ************ FOR UPDATE CUSTOMERS STATS************
+@app.route("/update-customer-stats-api/<id>", methods=["POST"])
+def update_customer_stats_api(id):
+    try:
+        if request.method == 'POST':      
+            if request.is_json:            
+                data = request.get_json()
+                today = data["today"]
+                goals = data["goals"]
+                notes = data["notes"]
+                if not today or not goals or not notes:
+                        return jsonify({"success": False, "error": "Missing details"})
+
+                query = {'_id': ObjectId(id)}
+                user_data = db.customers.find_one(query)
+                if user_data is not None:
+                    # Insert into db #
+                    newData = {'$set':{"today":today,
+                        "goals": goals,
+                        "notes": notes }}
+                    db.customers.update_one(user_data,newData)
+                    return jsonify({    
+                        "id": str(user_data['_id']),
+                        "success": True,
+                    })
+                else:
+                    return jsonify({
+                        "success": False, "error": "Invalid User."
+                    })
+            else:
+                return jsonify({"success": False, "msg": "Invalid data format"})
+        else:
+            return jsonify({"success": False, "msg": "Invalid request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
 
 # ************ ALL IN ONE SIGNIN ************
 @app.route("/signin-api", methods=["POST"])
@@ -786,7 +821,8 @@ def signin_api():
                             "active packages": customer['active packages'],
                             "inactive packages": customer['inactive packages'],
                             "notes": customer['notes'],
-
+                            "wallet_cards": customer['wallet_cards'],
+                            "good_to_know":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae aperiam consectetur deserunt officiis quos soluta autem placeat labore fuga, pariatur voluptatem odit similique quibusdam natus, hic exercitationem quisquam velit delectus.",
                             "success": True,
 
                         })
@@ -809,6 +845,7 @@ def signin_api():
                             "profile_pic_path": "static/images/company/company-profile-pics",
                             "region": company['region'],
                             "user_type": "company",
+                            "good_to_know":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae aperiam consectetur deserunt officiis quos soluta autem placeat labore fuga, pariatur voluptatem odit similique quibusdam natus, hic exercitationem quisquam velit delectus.",
                             "success": True,
                         })
                     else:
@@ -821,16 +858,18 @@ def signin_api():
                     if check_password_hash(hash_password, password):
                         return jsonify({"id": str(trainer['_id']),
                                         "email": trainer['email'],
-                                        # "contact person": trainer['contact_person'],
                                         "first_name": trainer['first_name'],
                                         "last_name": trainer['last_name'],
                                         "contact": trainer['phone'],
                                         "region": trainer['region'], 
                                         "certificate": trainer['certificate'],
                                         "trainer-profile-pic": trainer['profile_pic'],
+                                        "status": trainer['status'],
+                                        "bio": trainer['bio'],
                                         "profile_pic_path": "static/images/trainers/trainer-profile-pics",
                                         "certificate_path": "static/images/certificates",
-                                        "user_type": "trainer", 
+                                        "user_type": "trainer",
+                                        "good_to_know":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae aperiam consectetur deserunt officiis quos soluta autem placeat labore fuga, pariatur voluptatem odit similique quibusdam natus, hic exercitationem quisquam velit delectus.", 
                                         "success": True })
                     else:
                         return jsonify({
