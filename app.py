@@ -950,30 +950,9 @@ def signin_api():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
-# ************ TRAINER PRICING ************ unused old
-# @app.route("/trainer-package-api/<id>")
-# def trainer_package_api(id):
-#     try:
-#         if request.method == "GET":
-#             query = {'_id': ObjectId(id)}
-#             user_data = db.trainers.find_one(query)
-#             if user_data is not None:
-#                 return jsonify({
-#                     "id": str(user_data['_id']),
-#                     "packages": user_data['packages'],
-#                     "success": True,
-#                 })
-#             else:
-#                 return jsonify({
-#                     "success": False, "error": "Invalid User."
-#                 })
-#         else:
-#             return jsonify({"success": False, "error": "Invalid request"})
 
-#     except Exception as e:
-#         return jsonify({"success": False, "error": str(e)})
 
-# ************ TRAINER PRICING ************
+# ************ TRAINER PRICING ************note:changed
 @app.route("/trainer-package-api/<id>")
 def trainer_package_api(id):
     try:
@@ -990,6 +969,7 @@ def trainer_package_api(id):
                     lists.append(i)
                 return jsonify({
                     "id": str(user_data['_id']),
+                    "email": str(email),
                     "packages": lists,
                     "success": True,
                 })
@@ -1293,5 +1273,31 @@ def update_trainer_packages_api(id,package):
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
     
+# ************ GET TRAINER's COMPLETED SESSIONS ************
+@app.route("/get-trainer-completed-sessions-api/<id>", methods=["GET"])
+def get_trainer_complete_sessions_api(id):
+    try:
+        if request.method == "GET":
+            query = {'trainer_id': id,}
+            user_data = db.sessions.find(query)
+            if user_data is not None:
+                lists = []
+                # for loop
+                for i in user_data:
+                    i.update({"_id": str(i["_id"])})
+                    lists.append(i)
+                # end forloop
+                return jsonify({"success": True, "sessions": lists})                
+            else:
+                return jsonify({
+                    "success": False, "error": "Invalid User."
+                })
+        else:
+            return jsonify({"success": False, "error": "Invalid request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
 if __name__ == '__main__':
     app.run(debug=True)
