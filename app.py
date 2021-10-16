@@ -950,6 +950,29 @@ def signin_api():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
+# ************ TRAINER PRICING ************ unused old
+# @app.route("/trainer-package-api/<id>")
+# def trainer_package_api(id):
+#     try:
+#         if request.method == "GET":
+#             query = {'_id': ObjectId(id)}
+#             user_data = db.trainers.find_one(query)
+#             if user_data is not None:
+#                 return jsonify({
+#                     "id": str(user_data['_id']),
+#                     "packages": user_data['packages'],
+#                     "success": True,
+#                 })
+#             else:
+#                 return jsonify({
+#                     "success": False, "error": "Invalid User."
+#                 })
+#         else:
+#             return jsonify({"success": False, "error": "Invalid request"})
+
+#     except Exception as e:
+#         return jsonify({"success": False, "error": str(e)})
+
 # ************ TRAINER PRICING ************
 @app.route("/trainer-package-api/<id>")
 def trainer_package_api(id):
@@ -958,9 +981,16 @@ def trainer_package_api(id):
             query = {'_id': ObjectId(id)}
             user_data = db.trainers.find_one(query)
             if user_data is not None:
+                email = user_data['email']
+                query = {'trainer_email': email}
+                packagedata = db.trainer_packages.find(query)
+                lists = []
+                for i in packagedata:
+                    i.update({"_id": str(i["_id"])})
+                    lists.append(i)
                 return jsonify({
                     "id": str(user_data['_id']),
-                    "packages": user_data['packages'],
+                    "packages": lists,
                     "success": True,
                 })
             else:
@@ -972,6 +1002,7 @@ def trainer_package_api(id):
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
+
 
 # ************ BOOKINGS FOR CUSTOMER ************
 @app.route("/customer-bookings-api/<string:id>")
@@ -1180,5 +1211,87 @@ def update_trainer_stats_api(id):
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
+
+# ************ ADD TRAINER AVAILABILITY************
+@app.route("/add-trainer-availability-api/<id>", methods=["POST"])
+def add_trainer_availability_api(id):
+    try:
+        if request.method == 'POST':      
+            if request.is_json: 
+                data = request.get_json()
+                session = data["session"]
+                date = data["date"]
+                starttime = data["start-time"]
+                endtime = data["end-time"]
+                if not session or not date or not starttime or not endtime:
+                        return jsonify({"success": False, "error": "Missing details"})
+                query = {'_id': ObjectId(id)}
+                user_data = db.trainers.find_one(query)
+                if user_data is not None:
+                    available_dates = user_data["available_dates"]
+                    # output
+                    # [{'session': 'boxing', 'date': '17 OCT', 'time': '04-05'}, {'session': 'indoor', 'date': '18 OCT', 'time': '05-06'},
+                    # {'session': 'outdoor', 'date': '19 OCT', 'time': '06-07'}, {'session': 'indoor', 'date': '22 OCT', 'time': '07-08'},
+                    # {'session': 'boxing', 'date': '24 OCT', 'time': '08-09'}]
+                    
+                    # Modify old data to updated data 
+                    newtime = {"session":session,"date":date,"start-time":starttime, "end-time":endtime}
+                    available_dates.append(newtime)
+                    # output
+                    # [{'session': 'boxing', 'date': '17 OCT', 'time': '04-05'}, {'session': 'indoor', 'date': '18 OCT', 'time': '05-06'},
+                    # {'session': 'outdoor', 'date': '19 OCT', 'time': '06-07'}, {'session': 'indoor', 'date': '22 OCT', 'time': '07-08'},
+                    # {'session': 'boxing', 'date': '24 OCT', 'time': '08-09'}, {'session': 'mysession', 'date': '04 Oct', 'time': '04-05'}]
+
+                    # replace old data with new data into db 
+                    newData = {'$set':{"available_dates":available_dates }}
+                    db.trainers.update_one(query,newData)
+                    return jsonify({    
+                        "id": str(user_data['_id']),
+                        # "available_dates": str(available_dates),
+                        "success": True,
+                    })
+                else:
+                    return jsonify({
+                        "success": False, "error": "Invalid User."
+                    })
+            else:
+                return jsonify({"success": False, "msg": "Invalid data format"})
+        else:
+            return jsonify({"success": False, "msg": "Invalid request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})   
+
+
+# ************ UPDATE TRAINER PACKAGES************
+# note:yahan py id mai trainer id ayegi or package mai sirf ["1-training","5-training","10-training","Mud-scheme","training scheme"] in mai se koi 1 value aegi    
+@app.route("/update-trainer-packages-api/<id>/<package>", methods=["POST"])
+def update_trainer_packages_api(id,package):
+    try:
+        if request.method == 'POST':      
+            if request.is_json:
+                data = request.get_json()
+                price = data["price"]
+                if not price:
+                    return jsonify({"success": False, "error": "Missing Price"})
+                query = {'_id': ObjectId(id)}
+                user_data = db.trainers.find_one(query)
+                if user_data is not None:
+                    email = user_data["email"]
+                    query = {'trainer_email': email ,'name':package}
+                    packagedata = db.trainer_packages.find_one(query)
+                    if not packagedata:
+                        return jsonify ({"success": False, "error":"invalid package name in API"})
+                    newData = {'$set':{"price": price }}
+                    db.trainer_packages.update_one(packagedata,newData)
+                    return jsonify ({"success": True, "newprice":price})
+            else:
+                return jsonify({"success": False, "msg": "Invalid data format"})
+        else:
+            return jsonify({"success": False, "msg": "Invalid request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+    
 if __name__ == '__main__':
     app.run(debug=True)
