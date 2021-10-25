@@ -5,7 +5,7 @@ from sys import meta_path
 from pymongo.message import query
 from werkzeug.utils import secure_filename
 from bson import objectid
-from flask import Flask, render_template, request, url_for, jsonify, json, send_file, send_from_directory
+from flask import Flask, render_template, request, url_for, jsonify, json, send_file, send_from_directory,session
 import json
 import pymongo
 from bson.objectid import ObjectId
@@ -18,6 +18,7 @@ import datetime
 from datetime import datetime
 import random
 import string
+import stripe
 
 
 
@@ -30,18 +31,27 @@ client.list_database_names()
 database_name = "fitness-app"
 db = client[database_name]
 
+# configure stripe
+stripe_keys = {
+    'secret_key': 'sk_test_51JkZF0BqpCv5jaX1oSPqLeBjHdku2lgrClgkVpttodmhaeDcdzpmDm5GWi8yNnX1bI8ZGtb2kXTAosO4ppiy5jlV00Fi9ITk4p',
+    'publishable_key': 'pk_test_51JkZF0BqpCv5jaX1lRNB6p9ysHvt7VRndrZ0uKIy19RNkMinlKEqBrUXcMs3fLR2ZuJqHGCMOCMI4QPXsOVdkmnK00Zs2fBYeY'
+}
+stripe.api_key = stripe_keys['secret_key']
+
 # USER IMAGES UPLOAD FOLDER
 UPLOAD_FOLDER = join(dirname(realpath(__file__)), 'static/images/certificates')
 UPLOAD_FOLDER2 = join(dirname(realpath(__file__)), 'static/images/customers/profile-pics')
 UPLOAD_FOLDER3 = join(dirname(realpath(__file__)), 'static/images/company/company-profile-pics')
 UPLOAD_FOLDER4 = join(dirname(realpath(__file__)), 'static/images/trainers/trainer-profile-pics')
 UPLOAD_FOLDER5 = join(dirname(realpath(__file__)), 'static/images/customers/mud-schemes')
+UPLOAD_FOLDER6 = join(dirname(realpath(__file__)), 'static/images/gyms/gym-profile-pics')
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg',}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['UPLOAD_FOLDER2'] = UPLOAD_FOLDER2
 app.config['UPLOAD_FOLDER3'] = UPLOAD_FOLDER3
 app.config['UPLOAD_FOLDER4'] = UPLOAD_FOLDER4
 app.config['UPLOAD_FOLDER5'] = UPLOAD_FOLDER5
+app.config['UPLOAD_FOLDER6'] = UPLOAD_FOLDER6
 
 # configure socketio 
 socketio = SocketIO(app)
@@ -62,8 +72,48 @@ app.secret_key = '_5#y2L"F4Q8z\n\xec]/'
 # Homepage route
 @app.route("/")
 def index():
-    # return render_template("home.html")
-    return render_template("index.html")
+    # if 'loggedin' in session:
+        totalcustomers = db.customers.count()
+        totaltrainers = db.trainers.count()
+        totalcompany = db.company.count()
+        totalgyms = db.gyms.count()
+        Allpayments = db.payments.find({},{"amount":1,"_id":0}).sort("transaction_time", -1) 
+        lists = []
+        # output 
+        # [{'amount': '500'}, {'amount': '500'}, {'amount': '500'}, {'amount': '2500'}, {'amount': '2500'}, {'amount': '500'}, {'amount': '2500'}, {'amount': '2500'}, {'amount': '5000'}, {'amount': '5000'}]
+        for i in Allpayments:
+            i.update({"amount": str(i["amount"])})
+            lists.append(i)
+        # return render_template("home.html")
+        return render_template("index.html",totalcustomers = totalcustomers,totaltrainers=totaltrainers,totalcompany=totalcompany,totalgyms=totalgyms,lists=lists)
+    # else:
+        # Admin is not loggedin show them the login page
+        # return redirect(url_for('signin'))
+
+# @app.route("/signin", methods=['GET', 'POST'])
+# def signin():
+#     msg = ''
+#     if request.method == 'POST' and 'email' in request.form and 'password' in request.form:
+#         username = request.form['username']
+#         password = request.form['password']
+#         query = {'username':"admin"}
+#         admin = db.admin.find_one(query)
+#         if username != admin["username"]:
+#             return jsonify({
+#                 "success":False, "error":"Incorrect username"
+#             })
+#         elif password != admin['password']:
+#             return jsonify({
+#                 "success":False, "error":"Incorrect password"
+#             })
+#         else:
+#             session['loggedin'] = True
+#             session['id'] = admin['_id']
+#             session['username'] = admin['username']
+#             return redirect(url_for('index')) 
+
+  
+#     return render_template("adminlogin.html" ,msg=msg)
 
 
 # Dashboard route
@@ -94,6 +144,31 @@ def trainers():
     trainers = db.trainers.find()
     return render_template("trainers.html", trainers=trainers)
 
+# View bookings route
+@app.route('/bookings')
+def bookings():
+    # fetch data from trainers table
+    bookings = db.bookings.find()
+    return render_template("bookings.html", bookings=bookings)
+
+# certificates route
+@app.route('/certificates')
+def certificates():
+    # fetch data from trainers table
+    trainers = db.trainers.find()
+    # fetch data from certificates table
+    certificates = db.certificates.find()
+    return render_template("certificates.html", trainers=trainers,certificates=certificates)
+
+# View certificates route
+@app.route('/view-certificates/<email>')
+def view_certificates(email):
+    # fetch data from certificates table
+    query = {'trainer_email':email}
+    certificates = db.certificates.find(query)
+    return render_template("viewcertificates.html",certificates=certificates)
+
+
 
 # Edit accounts route **not using**
 @app.route('/edit/<cat>-<id>', methods=['GET', 'POST'])
@@ -119,6 +194,38 @@ def edit(cat, id):
         db[cat].update_one(filter, newvalues)
         return redirect(url_for(cat))
 
+# Edit booking accounts route
+@app.route('/edit/booking/<id>', methods=['GET', 'POST'])
+def editbooking(id):
+    if request.method == 'GET':
+        # fetch booking data which will edit
+        query = {'_id': ObjectId(id)}
+        edit = db.bookings.find_one(query)
+        return render_template("editbookings.html", edit=edit, id=id)
+    else:
+        first_name = request.form.get("customer_name")
+        last_name = request.form.get("trainer_name")
+        booking_month = request.form.get("booking_month")
+        booking_date = request.form.get("booking_date")
+        booking_time = request.form.get("booking_time")
+        location = request.form.get("location")
+        package = request.form.get("package")
+        # Replace Updated data in database
+        newvalues = {
+            "$set": {
+                'first_name': first_name,
+                'last_name': last_name,
+                'booking_month': booking_month,
+                'booking_date': booking_date,
+                'booking_time': booking_time,
+                'location': location,
+                'package_type': package,
+            }
+        }
+        filter = {'_id': ObjectId(id)}
+        db.bookings.update_one(filter, newvalues)
+        return redirect(url_for('bookings')) 
+
 # Edit customer accounts route
 @app.route('/edit/customers/<id>', methods=['GET', 'POST'])
 def editcustomers(id):
@@ -132,10 +239,10 @@ def editcustomers(id):
         last_name = request.form.get("last_name")
         email = request.form.get("email")
         phone = request.form.get("phone")
-        active_packages = request.form.get("active_packages")
-        inactive_packages = request.form.get("inacive_packages")
         goals = request.form.get("goals")
         today = request.form.get("today")
+        good_to_know = request.form.get("good_to_know")
+        notes = request.form.get("notes")
         password = request.form.get("password")
         # Replace Updated data in database
         newvalues = {
@@ -144,10 +251,10 @@ def editcustomers(id):
                 'first_name': first_name,
                 'last_name': last_name,
                 'phone': phone,
-                'active_packages': active_packages,
-                'inactive_packages': inactive_packages,
                 'goals': goals,
                 'today': today,
+                'good_to_know': good_to_know,
+                'notes': notes,
                 'password': password
             }
         }
@@ -185,6 +292,52 @@ def editcompany(id):
         }
         filter = {'_id': ObjectId(id)}
         db.company.update_one(filter, newvalues)
+        return redirect(url_for('company'))
+
+# Edit trainers accounts route
+@app.route('/edit/trainer/<id>', methods=['GET', 'POST'])
+def edittrainer(id):
+    if request.method == 'GET':
+        # fetch trainer data which will edit
+        query = {'_id': ObjectId(id)}
+        edit = db.trainers.find_one(query)
+        return render_template("edittrainer.html", edit=edit, id=id)
+    else:
+        first_name = request.form.get("first_name")
+        last_name = request.form.get("last_name")
+        email = request.form.get("email")
+        phone = request.form.get("phone")
+        region = request.form.get("region")
+        password = request.form.get("password")
+        today = request.form.get("today")
+        goals = request.form.get("goals")
+        notes = request.form.get("notes")
+        bio = request.form.get("bio")
+        link = request.form.get("link")
+        desc = request.form.get("desc")
+        level = request.form.get("level")
+        availability = request.form.get("availability")
+        # Replace Updated data in database
+        newvalues = {
+            "$set": {
+                'first_name': first_name,
+                'last_name': last_name,
+                'email': email,
+                'phone': phone,
+                'region': region,
+                'password': password,
+                'today': today,
+                'goals': goals,
+                'notes': notes,
+                'bio': bio,
+                'link': link,
+                'desc': desc,
+                'level': level,
+                'availability':availability,
+            }
+        }
+        filter = {'_id': ObjectId(id)}
+        db.trainer.update_one(filter, newvalues)
         return redirect(url_for('company')) 
 
 
@@ -334,8 +487,181 @@ def addnewcompany():
 @app.route('/completed-sessions')
 def completed_sessions():
     # fetch data from sessions table
-    sessions = db.sessions.find()
+    query = {"completed":True}
+    sessions = db.sessions.find(query)
     return render_template("sessions.html", sessions=sessions)
+
+# Contact Us messages customers
+@app.route("/messages/customers")
+def messages_customers():
+    # fetch data from contactus table 
+    query = {"account":"customer"}
+    messages = db.contact_us.find(query)
+    return render_template("/messages_customer.html", messages=messages)
+
+# Contact Us messages trainers
+@app.route("/messages/trainers")
+def messages_trainers():
+    # fetch data from contactus table 
+    query = {"account":"trainer"}
+    messages = db.contact_us.find(query)
+    return render_template("/messages_trainer.html", messages=messages)
+
+# Delete Contact Us messages 
+@app.route("/delete/messages/<id>")
+def delete_messages(id):
+    try:
+        # fetch data from contactus table 
+        query = {"_id": ObjectId(id)}
+        data = db.contact_us.find_one(query)
+        db.contact_us.delete_one(query)
+        if data['account'] == 'customer':
+            return redirect("/messages/customers")        
+        elif data['account'] == 'trainer':
+            return redirect("/messages/trainers")
+        return "Success"
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+#Gyms route
+@app.route("/gyms")
+def gyms():
+    try:
+        # fetch data from gyms table 
+        gyms = db.gyms.find()
+        return render_template("gyms.html", gyms=gyms)
+    except Exception as e:
+        return jsonify({"success":False, "error": str(e)})
+
+# Edit gyms accounts route
+@app.route('/edit/gyms/<id>', methods=['GET', 'POST'])
+def editgyms(id):
+    try:
+        if request.method == 'GET':
+            # fetch booking data which will edit
+            query = {'_id': ObjectId(id)}
+            edit = db.gyms.find_one(query)
+            return render_template("editgyms.html", edit=edit, id=id)
+        else:
+            name = request.form.get("name")
+            heading = request.form.get("heading")
+            desc = request.form.get("desc")
+            peoples = request.form.get("peoples")
+            links = request.form.get("links")
+            latitude = request.form.get("latitude")
+            longitude = request.form.get("longitude")
+            # profile_pic = request.files["profile_pic"]
+
+            # if profile_pic and allowed_file(profile_pic.filename):
+            #     filename = secure_filename(profile_pic.filename)
+            #     profile_pic.save(
+            #         os.path.join(app.config['UPLOAD_FOLDER6'], filename))
+            #     # compress image
+            #     newimage = Image.open(os.path.join(app.config['UPLOAD_FOLDER6'], str(filename)))
+            #     newimage.thumbnail((400, 400))
+            #     newimage.save(os.path.join(UPLOAD_FOLDER6, str(filename)), quality=95)
+            # else:
+            #     return jsonify({
+            #         "success": False,
+            #         "error": "File not found or incorrect format"
+            #     })
+            # Replace Updated data in database
+            newvalues = {
+                "$set": {
+                    'name': name,
+                    'heading': heading,
+                    'desc': desc,
+                    'peoples': peoples,
+                    'links': links,
+                    'latitude': float(latitude),
+                    'longitude': float(longitude),
+                }
+            }
+            filter = {'_id': ObjectId(id)}
+            db.gyms.update_one(filter, newvalues)
+            return redirect(url_for('gyms'))
+    except Exception as e:
+        return jsonify({"success":False, "error": str(e)})
+
+#payments route
+@app.route("/payments")
+def payments():
+    try:
+        # fetch data from payments table 
+        payments = db.payments.find()
+        return render_template("payments.html", payments=payments)
+    except Exception as e:
+        return jsonify({"success":False, "error": str(e)})
+
+#promo codes route
+@app.route("/promocodes")
+def promocodes():
+    try:
+        # fetch data from promocodes table 
+        promo = db.promo_codes.find()
+        return render_template("promocodes.html", promo=promo)
+    except Exception as e:
+        return jsonify({"success":False, "error": str(e)})
+
+# edit promo codes route
+@app.route("/edit/promo/<id>", methods=['GET', 'POST'])
+def edit_promo(id):
+    try:
+        if request.method == 'GET':
+            # fetch promo data which will edit
+            query = {'_id': ObjectId(id)}
+            edit = db.promo_codes.find_one(query)
+            return render_template("editpromo.html", edit=edit, id=id)
+        else:
+            name = request.form.get("name")
+            discount = request.form.get("discount")
+            type = request.form.get("type")
+            # Replace Updated data in database
+            newvalues = {
+                "$set": {
+                    'name': name,
+                    'discount': int(discount),
+                    'type':type
+                }
+            }
+            filter = {'_id': ObjectId(id)}
+            db.promo_codes.update_one(filter, newvalues)
+            return redirect(url_for('promocodes'))
+    except Exception as e:
+        return jsonify({"success":False, "error": str(e)})
+
+# delete promo codes route
+@app.route("/delete/promo/<id>")
+def delete_promo(id):
+    try:
+        query = {'_id': ObjectId(id)}
+        db.promo_codes.delete_one(query)
+        return redirect(url_for('promocodes'))
+    except Exception as e:
+        return jsonify({"success":False, "error": str(e)})
+
+# add new promo codes route
+@app.route("/addnewpromo", methods = ['GET', 'POST'])
+def add_promo():
+    try:
+        if request.method == 'GET':
+            return render_template("addpromo.html")
+        else:
+            name = request.form.get("name")
+            discount = request.form.get("discount")
+            if int(discount) >= 1:                
+                # Replace Updated data in database
+                newvalues = {
+                        'name': name,
+                        'discount': int(discount),
+                        'type': "%"                
+                }
+                db.promo_codes.insert_one(newvalues)
+                return redirect(url_for('promocodes'))
+            else:
+                return jsonify ({"success":False, "error":"Invalid discount number"})
+    except Exception as e:
+        return jsonify({"success":False, "error": str(e)})
 
 
 
@@ -967,6 +1293,7 @@ def signin_api():
                             "notes": customer['notes'],
                             "wallet_cards": customer['wallet_cards'],
                             "good_to_know": customer['good_to_know'],
+                            "key": stripe_keys['publishable_key'],
                             "success": True,
 
                         })
@@ -1107,7 +1434,7 @@ def customer_bookings(id):
 def trainer_bookings(id):
     try:
         if request.method == "GET":
-            query = {'trainer_id': id} 
+            query = {'trainer_id': id,"completed":False} 
             booking_data = db.bookings.find(query)
             lists = []
             for i in booking_data:
@@ -1304,7 +1631,7 @@ def add_trainer_availability_api(id):
                     # {'session': 'boxing', 'date': '24 OCT', 'time': '08-09'}]
                     
                     # Modify old data to updated data 
-                    newtime = {"session":session,"date":date,"start-time":starttime, "end-time":endtime}
+                    newtime = {"session":session,"date":date,"start-time":starttime, "end-time":endtime, "select-date":False}
                     available_dates.append(newtime)
                     # output
                     # [{'session': 'boxing', 'date': '17 OCT', 'time': '04-05'}, {'session': 'indoor', 'date': '18 OCT', 'time': '05-06'},
@@ -1542,10 +1869,12 @@ def add_promo_codes_customer_api():
         if request.method == "POST":
             name = request.form.get('name')
             discount = request.form.get('discount')
+            type = request.form.get('type')
             
             newAccount = {
             "name": name,
-            "discount": discount,
+            "discount": int(discount),
+            "type": type
             }
             query = {'name': name}
             promo = db.promo_codes.find_one(query)
@@ -1625,7 +1954,7 @@ def contact_us_for_trainer_api(id):
             trainerData = db.trainers.find_one(query)
             if trainerData is not None:
                 trainerEmail= trainerData['email']
-                newContact = {"message": message, "account": "trainer","trainerid": ObjectId(id),"trainer_email":trainerEmail}
+                newContact = {"message": message, "account": "trainer","trainerid": ObjectId(id),"trainer_email":trainerEmail,"time":datetime.now()}
                 db.contact_us.insert_one(newContact)
                 return jsonify({"success": True,"status":"message sent successfully"})
             else:
@@ -1650,6 +1979,33 @@ def contact_us_for_customer_api(id):
                 return jsonify({"success": True,"status":"message sent successfully"})
             else:
                 return jsonify({"success":False, "error":"Invalid trainer"})              
+        else:
+            return jsonify({"success": False, "error": "Invalid request"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+# ************ PROMO CODES VALIDATION ************
+@app.route("/validate-promocode-api/", methods=["POST"])
+def validate_promocode_api():
+    try:
+        if request.method == "POST":
+                code = request.form.get("code")
+                price = request.form.get("price")
+                query= {'name': code}
+                promo_codes = db.promo_codes.find_one(query)
+                if promo_codes is not None:
+                    discount = promo_codes['discount']
+                    discount_percent = int(price) * discount / 100
+                    afterdiscount = int(price) - int(discount_percent)
+                    if afterdiscount is not None:
+                        newPrice = afterdiscount
+                        return jsonify({
+                            "success": True, "newPrice": newPrice
+                        })
+                    else:
+                        return jsonify({"success":False, "error":"calculation error"}) 
+                else:
+                    return jsonify({"success":False, "error":"Invalid Promo Code"})
         else:
             return jsonify({"success": False, "error": "Invalid request"})
     except Exception as e:
@@ -1792,6 +2148,69 @@ def getmessages():
 #     return jsonify({"messages": messages})
 
 # ************************************* CHATING END ***********************************************
+
+# ************************************* STRIPE START ***********************************************
+@app.route("/payment-api", methods=["POST"])
+def payment_api():
+    # try:
+    if request.method == "POST":
+        if request.is_json:
+            data = request.get_json()
+            email = data['email'].lower()
+            customerid = data['customerid']
+            customername = data['customername']
+            token = data['token']
+            package = data['package']
+            amount = data['amount']
+            time = datetime.now()
+            apiammount = float(amount) * 100                    
+                        
+            customer = stripe.Customer.create(
+                        payment_method=token,
+                        invoice_settings={
+                        'default_payment_method': token,
+                        },
+            )
+            
+            # charge = stripe.Charge.create(
+            #               customer=customer.id,
+            #               amount=amount,
+            #               currency="sek",
+            #               source= token,
+            #             )
+            charge = stripe.PaymentIntent.create(
+                customer=customer.id,
+                amount=int(apiammount),
+                currency='sek',
+                payment_method_types=['card']
+                )
+            confirmpaymentmethod = stripe.PaymentIntent.confirm(
+  charge.id,
+  payment_method=token,
+)
+            # paymentrec = stripe.PaymentIntent.capture(
+            #                     confirmpaymentmethod.id,
+            #             )
+            print(charge)
+            if confirmpaymentmethod is not None:
+                newPayment = {
+                    "customerid": ObjectId(customerid),
+                    "customername": customername,
+                    "email": email,
+                    "package": package,
+                    "amount": amount,
+                    "transaction_time": time,
+                }
+                db.payments.insert_one(newPayment)
+                return jsonify ({"success":True, "status":"Transaction complete successfuly"})
+        else:
+            return jsonify({"success": False, "error": "Invalid json format."})
+    else:
+        return jsonify({"success": False, "error": "Invalid request"})
+    # except Exception as e:
+    #     return jsonify({"success": False, "error": str(e)})
+
+# ************************************* STRIPE END ***********************************************
 
 
 if __name__ == '__main__':

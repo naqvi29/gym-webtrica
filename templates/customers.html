@@ -43,8 +43,6 @@
                   <th>Phone Number</th>
                   <th>Password</th>
                   <th>Profile Picture</th>
-                  <th>Active Packages</th>
-                  <th>Inactive Packages</th>
                   <th>Goals</th>
                   <th>Today</th>
                   <th>Edit</th>
@@ -60,8 +58,6 @@
                   <td>{{ customers.phone }}</td>
                   <td>{{ customers.password }}</td>
                   <td><a href="static/images/customers/profile-pics/{{customers.profile_pic}}">{{customers.profile_pic}}</a></td>
-                  <td>{{ customers.active_packages }}</td>
-                  <td>{{ customers.inactive_packages }}</td>
                   <td>{{ customers.goals }}</td>
                   <td>{{ customers.today }}</td>
                   <td><a href="/edit/customers/{{ customers._id }}"><button type="button"

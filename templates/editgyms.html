@@ -1,0 +1,107 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+<meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Super-Admin | Edit Gyms</title>
+
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="/static/AdminLTE-master/plugins/fontawesome-free/css/all.min.css">
+  <!-- Ionicons -->
+  <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+  <!-- Tempusdominus Bootstrap 4 -->
+  <link rel="stylesheet" href="/static/AdminLTE-master/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css">
+  <!-- iCheck -->
+  <link rel="stylesheet" href="/static/AdminLTE-master/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+  <!-- JQVMap -->
+  <link rel="stylesheet" href="/static/AdminLTE-master/plugins/jqvmap/jqvmap.min.css">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="/static/AdminLTE-master/dist/css/adminlte.min.css">
+  <!-- overlayScrollbars -->
+  <link rel="stylesheet" href="/static/AdminLTE-master/plugins/overlayScrollbars/css/OverlayScrollbars.min.css">
+  <!-- Daterange picker -->
+  <link rel="stylesheet" href="/static/AdminLTE-master/plugins/daterangepicker/daterangepicker.css">
+  <!-- summernote -->
+  <link rel="stylesheet" href="/static/AdminLTE-master/plugins/summernote/summernote-bs4.min.css">
+{% endblock %}
+
+{% block header %}Edit{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+<form action="/edit/gyms/{{id}}" method="post">
+    <div class="mb-3">
+      <label for="exampleInputcname" class="form-label">Name</label>
+      <input type="text" name="name" class="form-control" id="exampleInputcname" aria-describedby="name" value="{{ edit.name }}">
+    </div>
+    <div class="mb-3">
+      <label for="exampleInputheading1" class="form-label">Heading</label>
+      <input type="text" name="heading" class="form-control" id="exampleInputheading1" aria-describedby="headingHelp" value="{{ edit.heading }}">
+    </div>
+    <div class="mb-3">
+      <label for="exampleInputdesc1" class="form-label">Description</label>
+      <input type="text" name="desc" class="form-control" id="exampleInputdesc1" value="{{ edit.desc }}">
+    </div>
+    <div class="mb-3">
+      <label for="examplepeoples1" class="form-label">Peoples</label>
+      <input type="text" name="peoples" class="form-control" id="examplepeoples1" value="{{ edit.peoples }}">
+    </div>
+    <div class="mb-3">
+      <label for="examplelinks1" class="form-label">Links</label>
+      <input type="text" name="links" class="form-control" id="examplelinks1" value="{{ edit.links }}">
+    </div>
+    <div class="mb-3">
+      <label for="exampleprofile_pic1" class="form-label">Profile Picture</label>
+      <input type="file" name="profile_pic" class="form-control" id="exampleprofile_pic1" value="{{ edit.profile_pic }}">
+    </div>
+    <div class="mb-3">
+      <label for="examplelatitude1" class="form-label">Latitude</label>
+      <input type="text" name="latitude" class="form-control" id="examplelatitude1" value="{{ edit.latitude }}">
+    </div>
+    <div class="mb-3">
+      <label for="examplelongitude1" class="form-label">Longitude</label>
+      <input type="text" name="longitude" class="form-control" id="examplelongitude1" value="{{ edit.longitude }}">
+    </div>
+    
+    <button type="submit" class="btn btn-outline-info">Update</button>
+  </form>
+</div>
+{% endblock %}
+{% block bodyscripts %}
+  <!-- jQuery -->
+<script src="{{ url_for('static', filename='AdminLTE-master/plugins/jquery/jquery.min.js') }}"></script>
+<!-- jQuery UI 1.11.4 -->
+<script src="{{ url_for('static', filename='AdminLTE-master/plugins/jquery-ui/jquery-ui.min.js') }}"></script>
+<!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+<script>
+  $.widget.bridge('uibutton', $.ui.button)
+</script>
+<!-- Bootstrap 4 -->
+<script src="{{ url_for('static', filename='AdminLTE-master/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<!-- ChartJS -->
+<script src="{{ url_for('static', filename='AdminLTE-master/plugins/chart.js/Chart.min.js') }}"></script>
+<!-- Sparkline -->
+<script src="{{ url_for('static', filename='AdminLTE-master/plugins/sparklines/sparkline.js') }}"></script>
+<!-- JQVMap -->
+<script src="{{ url_for('static', filename='AdminLTE-master/plugins/jqvmap/jquery.vmap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='AdminLTE-master/plugins/jqvmap/maps/jquery.vmap.usa.js') }}"></script>
+<!-- jQuery Knob Chart -->
+<script src="{{ url_for('static', filename='AdminLTE-master/plugins/jquery-knob/jquery.knob.min.js') }}"></script>
+<!-- daterangepicker -->
+<script src="{{ url_for('static', filename='AdminLTE-master/plugins/moment/moment.min.js') }}"></script>
+<script src="{{ url_for('static', filename='AdminLTE-master/plugins/daterangepicker/daterangepicker.js') }}"></script>
+<!-- Tempusdominus Bootstrap 4 -->
+<script src="{{ url_for('static', filename='AdminLTE-master/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js') }}"></script>
+<!-- Summernote -->
+<script src="{{ url_for('static', filename='AdminLTE-master/plugins/summernote/summernote-bs4.min.js') }}"></script>
+<!-- overlayScrollbars -->
+<script src="{{ url_for('static', filename='AdminLTE-master/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js') }}"></script>
+<!-- AdminLTE App -->
+<script src="{{ url_for('static', filename='AdminLTE-master/dist/js/adminlte.js') }}"></script>
+<!-- AdminLTE for demo purposes -->
+<script src="{{ url_for('static', filename='AdminLTE-master/dist/js/demo.js') }}"></script>
+<!-- AdminLTE dashboard demo (This is only for demo purposes) -->
+<script src="{{ url_for('static', filename='AdminLTE-master/dist/js/pages/dashboard.js') }}"></script>
+  {% endblock %}

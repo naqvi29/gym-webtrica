@@ -43,16 +43,10 @@
                   <th>Phone Number</th>
                   <th>Password</th>
                   <th>Region</th>
-                  <th>Certificate</th>
                   <th>Availability</th>
-                  <th>Available dates</th>
-                  <th>Description</th>
                   <th>Level</th>
-                  <th>Link</th>
-                  <th>Packages</th>
                   <th>Rating</th>
                   <th>Trainer Certified</th>
-                  <th>Bio</th>
                   <th>Profile Picture</th>
                   <th>Edit</th>
                   <th>Delete</th>
@@ -67,18 +61,12 @@
                   <td>{{ trainers.phone }}</td>
                   <td>{{ trainers.password }}</td>
                   <td>{{ trainers.region }}</td>
-                  <td><a href="/certificate/{{trainers.certificate}}">{{trainers.certificate}}</a></td>
                   <td>{{ trainers.availability }}</td>
-                  <td>{{ trainers.available_dates }}</td>
-                  <td>{{ trainers.desc }}</td>
                   <td>{{ trainers.level }}</td>
-                  <td>{{ trainers.link }}</td>
-                  <td>{{ trainers.packages }}</td>
                   <td>{{ trainers.rating }}</td>
                   <td>{{ trainers.trainer_certified }}</td>
-                  <td>{{ trainers.bio }}</td>
                   <td><a href="/static/images/trainers/trainer-profile-pics/{{trainers.profile_pic}}">{{trainers.profile_pic}}</a></td>
-                  <td><a href="/edit/trainers-{{ trainers._id }}"><button type="button"
+                  <td><a href="/edit/trainer/{{ trainers._id }}"><button type="button"
                         class="btn-outline-info btn-sm btn-block">edit</button>
                     </a>
                   </td>

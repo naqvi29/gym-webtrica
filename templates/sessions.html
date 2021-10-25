@@ -3,7 +3,7 @@
 {% block head %}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AdminLTE 3 | DataTables</title>
+<title>Completed Sessions</title>
 
 <!-- Google Font: Source Sans Pro -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -27,22 +27,25 @@
       <div class="col-12">
         <div class="card">
           <div class="card-body">
-            <table id="example1" class="table table-bordered table-striped">
+            <table id="example1" class="table table-bordered table-striped display" style="width:100%">
               <thead>
                 <tr>
                   <th>Session ID</th>
-                  <th>Customer</th>
-                  <th>Trainer</th>
-                  <th>Company</th>
+                  <th>Customer Name</th>
+                  <th>Trainer Name</th>
+                  <th>Location</th>
+                  <th>Package</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
                 {% for sessions in sessions %}
                 <tr>
                   <td>{{ sessions._id }}</td>
-                  <td>{{ sessions.customer }}</td>
-                  <td>{{ sessions.trainer }}</td>
-                  <td>{{ sessions.company }}</td>
+                  <td>{{ sessions.customer_name }}</td>
+                  <td>{{ sessions.trainer_name }}</td>
+                  <td>{{ sessions.location }}</td>
+                  <td>{{ sessions.package }}</td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -90,7 +93,7 @@
 <script>
   $(function () {
     $("#example1").DataTable({
-      "responsive": true, "lengthChange": false, "autoWidth": false,
+      "responsive": true, "lengthChange": false, "autoWidth": false, "scrollX": true,
       "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
     }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
     $('#example2').DataTable({
@@ -103,5 +106,11 @@
       "responsive": true,
     });
   });
+//   $(document).ready(function() {
+//     $('#example1').DataTable( {
+//         "scrollX": true, 
+//     } );
+// } );
+  
 </script>
 {% endblock %}
