@@ -58,7 +58,7 @@
                     </a>
                   </td>
                   <td>
-                    <a href="/delete/gyms/{{ gyms._id }}"><button type="button"
+                    <a href="/delete/gyms/{{ gyms._id }}"><button onclick="return myFunction()" type="button"
                         class="btn-outline-danger btn-sm btn-block">Delete</button>
                     </a>
                   </td>
@@ -127,5 +127,14 @@
 //     } );
 // } );
   
+</script>
+<script LANGUAGE="JavaScript">
+  function myFunction() {
+      var agree=confirm("Are you sure you want to proceed?");
+      if (agree)
+      return true ;
+      else
+      return false ;
+  }
 </script>
 {% endblock %}

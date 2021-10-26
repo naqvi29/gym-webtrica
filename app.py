@@ -72,48 +72,60 @@ app.secret_key = '_5#y2L"F4Q8z\n\xec]/'
 # Homepage route
 @app.route("/")
 def index():
-    # if 'loggedin' in session:
+    if 'loggedin' in session:
         totalcustomers = db.customers.count()
         totaltrainers = db.trainers.count()
         totalcompany = db.company.count()
-        totalgyms = db.gyms.count()
-        Allpayments = db.payments.find({},{"amount":1,"_id":0}).sort("transaction_time", -1) 
-        lists = []
-        # output 
-        # [{'amount': '500'}, {'amount': '500'}, {'amount': '500'}, {'amount': '2500'}, {'amount': '2500'}, {'amount': '500'}, {'amount': '2500'}, {'amount': '2500'}, {'amount': '5000'}, {'amount': '5000'}]
-        for i in Allpayments:
-            i.update({"amount": str(i["amount"])})
-            lists.append(i)
+        totalgyms = db.gyms.count()        
+        I_one_training = db.bookings.count({'package_type': 'Training-1','completed':False})
+        I_five_training = db.bookings.count({'package_type': 'Training-5','completed':False})
+        I_ten_training = db.bookings.count({'package_type': 'Training-10','completed':False})
+        I_mud_scheme = db.bookings.count({'package_type': 'Mud-Scheme','completed':False})
+        I_training_scheme = db.bookings.count({'package_type': 'Training-Scheme','completed':False})
+        C_one_training = db.bookings.count({'package_type': 'Training-1','completed':True})
+        C_five_training = db.bookings.count({'package_type': 'Training-5','completed':True})
+        C_ten_training = db.bookings.count({'package_type': 'Training-10','completed':True})
+        C_mud_scheme = db.bookings.count({'package_type': 'Mud-Scheme','completed':True})
+        C_training_scheme = db.bookings.count({'package_type': 'Training-Scheme','completed':True})
+
         # return render_template("home.html")
-        return render_template("index.html",totalcustomers = totalcustomers,totaltrainers=totaltrainers,totalcompany=totalcompany,totalgyms=totalgyms,lists=lists)
-    # else:
+        return render_template("index.html",totalcustomers = totalcustomers,totaltrainers=totaltrainers,totalcompany=totalcompany,totalgyms=totalgyms,I_one_training=I_one_training,I_five_training=I_five_training,I_ten_training=I_ten_training,I_mud_scheme=I_mud_scheme,I_training_scheme=I_training_scheme,C_one_training=C_one_training,C_five_training=C_five_training,C_ten_training=C_ten_training,C_mud_scheme=C_mud_scheme,C_training_scheme=C_training_scheme)
+    else:
         # Admin is not loggedin show them the login page
-        # return redirect(url_for('signin'))
+        return redirect(url_for('signin'))
 
-# @app.route("/signin", methods=['GET', 'POST'])
-# def signin():
-#     msg = ''
-#     if request.method == 'POST' and 'email' in request.form and 'password' in request.form:
-#         username = request.form['username']
-#         password = request.form['password']
-#         query = {'username':"admin"}
-#         admin = db.admin.find_one(query)
-#         if username != admin["username"]:
-#             return jsonify({
-#                 "success":False, "error":"Incorrect username"
-#             })
-#         elif password != admin['password']:
-#             return jsonify({
-#                 "success":False, "error":"Incorrect password"
-#             })
-#         else:
-#             session['loggedin'] = True
-#             session['id'] = admin['_id']
-#             session['username'] = admin['username']
-#             return redirect(url_for('index')) 
+@app.route("/signin", methods=['GET', 'POST'])
+def signin():
+    if request.method == 'POST' and 'username' in request.form and 'password' in request.form:
+        username = request.form['username']
+        password = request.form['password']
+        query = {'username': username}
+        admin = db.admin.find_one(query)
+        if admin:
+            matched = admin['password'] == password
+            if matched is True:
+                # Create session data, we can access this data in other routes                
+                session['loggedin'] = True
+                session['id'] =  str(admin['_id'])
+                session['username'] = admin['username']
+                # Redirect to index page
+                return redirect(url_for('index'))
+            else:
+                return jsonify({"status":False,"error":"Invalid Password"})
+        else:
+            return jsonify({"success":False, "error":"Invalid username"})
+    else:  
+        return render_template("adminlogin.html")
 
-  
-#     return render_template("adminlogin.html" ,msg=msg)
+# configure signout route
+@app.route('/signout')
+def signout():
+        # Remove session data, this will log the user out 
+        session.pop('loggedin', None)
+        session.pop('id', None)
+        session.pop('username', None)
+        # Redirect to index page
+        return redirect(url_for('index'))
 
 
 # Dashboard route
@@ -151,6 +163,69 @@ def bookings():
     bookings = db.bookings.find()
     return render_template("bookings.html", bookings=bookings)
 
+# View Superadmin setting route
+@app.route('/settings')
+def settings():
+    # fetch data from admin table
+    admin = db.admin.find()
+    return render_template("settings.html", admin=admin)
+
+# edit admin account 
+@app.route('/edit/admin/<id>', methods=['GET', 'POST'])
+def edit_admin(id):
+    if request.method == 'GET':
+        # fetch data from admin table 
+        query = {'_id': ObjectId(id)}
+        admin = db.admin.find_one(query)
+        return render_template("edit-admin.html",admin=admin)
+    else:
+        username = request.form.get("username")
+        password = request.form.get("password")
+        cpassword = request.form.get("cpassword")
+        if cpassword != password:
+            return jsonify({"success":False, "error":"Password didn't match"})
+        newvalues = {
+            "$set": {
+                'username': username,
+                'password': password,
+            }
+        }
+        filter = {'_id': ObjectId(id)}
+        db.admin.update_one(filter, newvalues)
+        return redirect(url_for('settings')) 
+
+# add new admin 
+@app.route("/addnew/admin", methods=['GET', 'POST'])
+def add_admin():
+    if request.method == 'GET':
+        return render_template("add-admin.html")
+    else:
+        username = request.form.get("username")
+        password = request.form.get("password")
+        cpassword = request.form.get("cpassword")
+        if cpassword != password:
+            return jsonify({"success":False, "error":"Password didn't match"})
+        newvalues = {
+                'username': username,
+                'password': password,
+        }
+        db.admin.insert_one(newvalues)
+        return redirect(url_for('settings')) 
+# delete admin 
+@app.route("/delete/admin/<id>",)
+def delete_admin(id):
+    if request.method == 'GET':
+        query = {'_id': ObjectId(id)}
+        admin = db.admin.find_one(query)
+        if admin is None:
+            return jsonify({"success":False, "error":"Invalid Admin"})
+        db.admin.delete_one(query)
+        return redirect(url_for('settings'))
+    else:
+        return jsonify({"success":False,"error":"Invalid Request"})
+            
+
+
 # certificates route
 @app.route('/certificates')
 def certificates():
@@ -168,31 +243,79 @@ def view_certificates(email):
     certificates = db.certificates.find(query)
     return render_template("viewcertificates.html",certificates=certificates)
 
+# Mark certified route
+@app.route('/mark-certified/<id>')
+def mark_certified(id):
+    # fetch data from certificates table
+    query = {'_id': ObjectId(id)}
+    newvalues = {
+            "$set": {
+                'trainer_certified': 'True',
+            }
+        }
+    db.trainers.update_one(query, newvalues)
+    return redirect(url_for('certificates')) 
+
+# add new certificate to trainer 
+@app.route("/add-certificate", methods = ['GET','POST'])
+def add_certificate():
+    try:
+        if request.method == 'POST':
+            traineremail = request.form.get("trainer-email")
+            certificate = request.files["certificate"]
+            query = {'email': traineremail}
+            trainerdata = db.trainers.find_one(query)
+            if trainerdata is None:
+                return jsonify({"success":False , "error":"Invalid Email or trainer didn't exist"})
+
+            if certificate and allowed_file(certificate.filename):
+                filename = secure_filename(certificate.filename)
+                certificate.save(
+                    os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                # compress image
+                newimage = Image.open(os.path.join(app.config['UPLOAD_FOLDER'], str(filename)))
+                newimage.thumbnail((400, 400))
+                newimage.save(os.path.join(UPLOAD_FOLDER, str(filename)), quality=95)
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": "File not found or incorrect format"
+                })
+            
+            newvalues = {
+                'trainer_email': traineremail,
+                'certificate': filename
+            }
+            db.certificates.insert_one(newvalues)
+            return redirect(url_for('certificates')) 
+        else:
+            return render_template("add-certificate.html")
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
 
 
 # Edit accounts route **not using**
-@app.route('/edit/<cat>-<id>', methods=['GET', 'POST'])
-def edit(cat, id):
-    if request.method == 'GET':
-        # fetch data which will edit
-        query = {'_id': ObjectId(id)}
-        edit = db[cat].find_one(query)
-        return render_template("edit.html", edit=edit, cat=cat, id=id)
-    else:
-        email = request.form.get("email")
-        phone = request.form.get("phone")
-        password = request.form.get("password")
-        # Replace Updated data in database
-        newvalues = {
-            "$set": {
-                'email': email,
-                'phone': phone,
-                'password': password
-            }
-        }
-        filter = {'_id': ObjectId(id)}
-        db[cat].update_one(filter, newvalues)
-        return redirect(url_for(cat))
+# @app.route('/edit/<cat>-<id>', methods=['GET', 'POST'])
+# def edit(cat, id):
+#     if request.method == 'GET':
+#         # fetch data which will edit
+#         query = {'_id': ObjectId(id)}
+#         edit = db[cat].find_one(query)
+#         return render_template("edit.html", edit=edit, cat=cat, id=id)
+#     else:
+#         email = request.form.get("email")
+#         phone = request.form.get("phone")
+#         password = request.form.get("password")
+#         newvalues = {
+#             "$set": {
+#                 'email': email,
+#                 'phone': phone,
+#                 'password': password
+#             }
+#         }
+#         filter = {'_id': ObjectId(id)}
+#         db[cat].update_one(filter, newvalues)
+#         return redirect(url_for(cat))
 
 # Edit booking accounts route
 @app.route('/edit/booking/<id>', methods=['GET', 'POST'])
@@ -354,11 +477,11 @@ def delete(cat, id):
 @app.route('/newaccounts')
 def newaccounts():
     # fetch recent 2 documents from customers collection
-    customers = db.customers.find().sort('_id', -1).limit(2)
+    customers = db.customers.find().sort('_id', -1).limit(4)
     # fetch recent 2 documents from company collection
-    company = db.company.find().sort('_id', -1).limit(2)
+    company = db.company.find().sort('_id', -1).limit(4)
     # fetch recent 2 documents from trainers collection
-    trainers = db.trainers.find().sort('_id', -1).limit(2)
+    trainers = db.trainers.find().sort('_id', -1).limit(4)
     return render_template("newaccounts.html",
                            customers=customers,
                            company=company,
@@ -375,28 +498,27 @@ def viewcertificate(certificatename):
 
 
 # Add new account route **unused**
-@app.route('/addnew/<cat>', methods=['GET', 'POST'])
-def addnew(cat):
-    if request.method == 'POST':
-        name = request.form.get("name")
-        email = request.form.get("email")
-        phone = request.form.get("phone")
-        password = request.form.get("password")
-        hash_password = generate_password_hash(password)
-        address = request.form.get("address")
-        # Insert into db
-        newAccount = {
-            "name": name,
-            "email": email,
-            "phone": phone,
-            "password": password,
-            "hash": hash_password,
-            "address": address
-        }
-        db[cat].insert_one(newAccount)
-        return redirect(url_for(cat))
-    else:
-        return render_template('addnew.html', cat=cat)
+# @app.route('/addnew/<cat>', methods=['GET', 'POST'])
+# def addnew(cat):
+#     if request.method == 'POST':
+#         name = request.form.get("name")
+#         email = request.form.get("email")
+#         phone = request.form.get("phone")
+#         password = request.form.get("password")
+#         hash_password = generate_password_hash(password)
+#         address = request.form.get("address")
+#         newAccount = {
+#             "name": name,
+#             "email": email,
+#             "phone": phone,
+#             "password": password,
+#             "hash": hash_password,
+#             "address": address
+#         }
+#         db[cat].insert_one(newAccount)
+#         return redirect(url_for(cat))
+#     else:
+#         return render_template('addnew.html', cat=cat)
 
 # Add new customer account route
 @app.route('/addnew/customer', methods=['GET', 'POST'])
@@ -481,6 +603,156 @@ def addnewcompany():
         return redirect(url_for('company'))
     else:
         return render_template('addnewcompany.html')
+
+# Add new trainer account route
+@app.route('/addnew/trainer', methods=['GET', 'POST'])
+def addnewtrainer():
+    if request.method == 'POST':
+        first_name = request.form.get("first_name")
+        last_name = request.form.get("last_name")
+        email = request.form.get("email")
+        contact = request.form.get("phone")        
+        region = request.form.get("region")        
+        password = request.form.get("password")
+        confirmpassword = request.form.get("cpassword")
+        trainer_profile_pic = request.files["profile_pic"]
+        certificates = request.files.getlist("certificate")
+        filenames = []
+        for certificate in certificates:
+            if certificate and allowed_file(certificate.filename):
+                filename = secure_filename(certificate.filename)
+                print (filename)
+                certificate.save(
+                    os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                filename=filenames.append(filename)  
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": "Certificate not found or incorrect format"
+                })
+        if trainer_profile_pic and allowed_file(trainer_profile_pic.filename):
+                filename2 = secure_filename(trainer_profile_pic.filename)
+                trainer_profile_pic.save(
+                    os.path.join(app.config['UPLOAD_FOLDER4'], filename2))
+                # compress image
+                newimage = Image.open(os.path.join(app.config['UPLOAD_FOLDER4'], str(filename2)))
+                newimage.thumbnail((400, 400))
+                newimage.save(os.path.join(UPLOAD_FOLDER4, str(filename2)), quality=95)
+        else:
+            return jsonify({
+                "success": False,
+                "error": "Profile Picture not found or incorrect format"
+            })
+        regex = '[^@]+@[a-zA-Z0-9]+[.][a-zA-Z]+'
+        if not (re.search(regex, email)):
+            return jsonify({"success": False, "error": "invalid email"})
+        if password != confirmpassword:
+            return jsonify({
+                "success": False,
+                "error": "password doesn't match"
+            })       
+        
+        if not first_name or not last_name or not region or not contact:
+                return jsonify({"success": False, "error": "Missing details"})
+
+        query = {"email": email}
+        user_data1 = db.trainers.find_one(query)
+        user_data2 = db.company.find_one(query)
+        user_data3 = db.customers.find_one(query)
+        if user_data1 is None and user_data2 is None and user_data3 is None:
+            hash_password = generate_password_hash(password)
+            # Insert into db
+            newAccount = {
+                "first_name": first_name,
+                "last_name": last_name,
+                "email": email,
+                "phone": contact,
+                "password": password,
+                "hash": hash_password,
+                "region": region,                    
+                "profile_pic": filename2,
+                "status": True,
+                "gyms": [],
+                "today": "0",
+                "notes": "Lorem",
+                "goals": "0",
+                "bio": "lorem",
+                "trainer_certified": "False",
+                "link": "https://www.youtube.com/watch?v=vlXRyUn9feI",
+                "desc": "lorem",
+                "available_dates": [],
+                "rating": "0",
+                "level": "0",
+                "availability": "0"
+            }
+
+            db.trainers.insert_one(newAccount)
+            for filename in filenames:
+                newCertificates = {
+                    "certificate": filename,
+                    "trainer_email": email  
+                }
+                db.certificates.insert_one(newCertificates)
+            # insert empty ratings
+            query = {"trainer_email": email}
+            ratings= db.ratings.find_one(query)
+            if ratings is None:
+                newRatings = {
+                    "trainer_email":email,
+                    "1-star": 0,
+                    "2-star": 0,
+                    "3-star": 0,
+                    "4-star": 0,
+                    "5-star": 0,
+                    "totalRatings":0
+                }
+                db.ratings.insert_one(newRatings)
+
+            # insert default packages
+            query = {"trainer_email": email}
+            packages = db.trainer_packages.find_one(query)
+            if packages is None:
+                def1 = {
+                    "name":"1-training",
+                    "price": "500",
+                    "desc": "lorem",
+                    "trainer_email":email 
+                }
+                def2 = {
+                    "name":"5-training",
+                    "price": "2500",
+                    "desc": "lorem",
+                    "trainer_email":email 
+                }
+                def3 = {
+                    "name":"10-training",
+                    "price": "5000",
+                    "desc": "lorem",
+                    "trainer_email":email 
+                }
+                def4 = {
+                    "name":"Mud scheme",
+                    "price": "500",
+                    "desc": "lorem",
+                    "trainer_email":email 
+                }
+                def5 = {
+                    "name":"training scheme",
+                    "price": "500",
+                    "desc": "lorem",
+                    "trainer_email":email 
+                }
+                db.trainer_packages.insert_one(def1)
+                db.trainer_packages.insert_one(def2)
+                db.trainer_packages.insert_one(def3)
+                db.trainer_packages.insert_one(def4)
+                db.trainer_packages.insert_one(def5)
+            
+            return redirect(url_for('trainers'))
+        else:
+            return jsonify({"success":False,"error":"User already exist with this email"})
+    else:
+        return render_template('addnewtrainer.html')
 
 
 # View completed sessions route
@@ -1974,7 +2246,7 @@ def contact_us_for_customer_api(id):
             customerData = db.customers.find_one(query)
             if customerData is not None:
                 customerEmail= customerData['email']
-                newContact = {"message": message, "account": "customer","customerid": ObjectId(id),"customer_email":customerEmail}
+                newContact = {"message": message, "account": "customer","customerid": ObjectId(id),"customer_email":customerEmail,"time":datetime.now()}
                 db.contact_us.insert_one(newContact)
                 return jsonify({"success": True,"status":"message sent successfully"})
             else:
@@ -1985,7 +2257,7 @@ def contact_us_for_customer_api(id):
         return jsonify({"success": False, "error": str(e)})
 
 # ************ PROMO CODES VALIDATION ************
-@app.route("/validate-promocode-api/", methods=["POST"])
+@app.route("/validate-promocode-api", methods=["POST"])
 def validate_promocode_api():
     try:
         if request.method == "POST":
@@ -2010,6 +2282,35 @@ def validate_promocode_api():
             return jsonify({"success": False, "error": "Invalid request"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
+
+# mark-complete session 
+@app.route("/mark-complete-session/<string:bookingid>")
+def mark_complete_session(bookingid):
+    try:
+        query = {"_id": ObjectId(bookingid)}
+        booking = db.bookings.find_one(query)
+        db.bookings.update(
+                query,
+                {"$set": {"completed": True}}
+            )
+
+        newValues = {
+                'customer_id': booking['customer_id'],
+                'trainer_id': booking['trainer_id'],
+                'dateAdded': booking['dateAdded'],
+                'trainer_name': booking['trainer_name'],
+                'customer_name': booking['customer_name'],
+                'location': booking['location'],
+                'package': booking['package_type'],
+                'customer_profile_pic': booking['customer_profile_pic'],
+                'completed': True,
+
+        }
+        db.sessions.insert_one(newValues)
+        return jsonify({"success": True,})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
 
 # ************************************* CHATING START ***********************************************
 

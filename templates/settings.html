@@ -3,7 +3,7 @@
 {% block head %}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>All Certificates</title>
+<title>Settings</title>
 
 <!-- Google Font: Source Sans Pro -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="/static/AdminLTE-master/dist/css/adminlte.min.css">
 {% endblock %}
 
-{% block header %}Select Trainer{% endblock %}
+{% block header %}Admin Settings{% endblock %}
 
 {% block content %}
 
@@ -28,7 +28,7 @@
         <div class="card">
           <div class="card-header">
             <div class="add">
-              <a href="/add-certificate"><button class="btn-outline-success btn-sm">Add a new certificate</button></a>
+              <a href="/addnew/admin"><button class="btn-outline-success btn-sm">Add a new admin</button></a>
             </div>
 
           </div>
@@ -37,27 +37,28 @@
             <table id="example1" class="table table-bordered table-striped display" style="width:100%">
               <thead>
                 <tr>
-                  <th>Trainer Name</th>
-                  <th>Trainer Email</th>
-                  <th>Certificates</th>
-                  <th>Action</th>
+                  <th>admin ID</th>
+                  <th>username</th>
+                  <th>Password</th>
+                  <th>Edit</th>
+                  <th>Delete</th>
                 </tr>
               </thead>
               <tbody>
-                
-                {% for trainers in trainers %}
+                {% for admin in admin %}
                 <tr>
-                  <td>{{ trainers.first_name }} {{ trainers.last_name }}</td>
-                  <td>{{ trainers.email }}</td>
-                  <td><a href="/view-certificates/{{trainers.email}}"><button type="button"
-                        class="btn-outline-info btn-sm btn-block">View Certificates</button>
+                  <td>{{ admin._id }}</td>
+                  <td>{{ admin.username }}</td>
+                  <td>{{ admin.password }}</td>
+                  <td><a href="/edit/admin/{{ admin._id }}"><button type="button"
+                        class="btn-outline-info btn-sm btn-block">edit</button>
                     </a>
                   </td>
-                  {% if trainers.trainer_certified == "False" %}
-                    <td><a href="/mark-certified/{{trainers._id}}"><button onclick="return myFunction()" type="button" class="btn-outline-dark btn-sm btn-block">Mark as Certified</button></a> </td>
-                  {% else %}
-                    <td><a href="#"><button type="button" class="btn-success btn-sm btn-block">Certified</button></a> </td>
-                  {% endif %}
+                  <td>
+                    <a href="/delete/admin/{{ admin._id }}"><button onclick="return myFunction()" type="button"
+                        class="btn-outline-danger btn-sm btn-block">Delete</button>
+                    </a>
+                  </td>
                 </tr>
                 {% endfor %}
 
@@ -125,12 +126,12 @@
   
 </script>
 <script LANGUAGE="JavaScript">
-  function myFunction() {
-      var agree=confirm("Are you sure you want to proceed?");
-      if (agree)
-      return true ;
-      else
-      return false ;
-  }
+    function myFunction() {
+        var agree=confirm("Are you sure you want to proceed?");
+        if (agree)
+        return true ;
+        else
+        return false ;
+    }
 </script>
 {% endblock %}

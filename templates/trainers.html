@@ -3,7 +3,7 @@
 {% block head %}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AdminLTE 3 | Trainers</title>
+<title>Trainers | Accounts</title>
 
 <!-- Google Font: Source Sans Pro -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -28,7 +28,7 @@
         <div class="card">
           <div class="card-header">
             <div class="add">
-              <a href="/addnew/trainers"><button class="btn-outline-success btn-sm">Add a new trainer</button></a>
+              <a href="/addnew/trainer"><button class="btn-outline-success btn-sm">Add a new trainer</button></a>
             </div>
 
           </div>
@@ -71,7 +71,7 @@
                     </a>
                   </td>
                   <td>
-                    <a href="/delete/trainers-{{ trainers._id }}"><button type="button"
+                    <a href="/delete/trainers-{{ trainers._id }}"><button onclick="return myFunction()" type="button"
                         class="btn-outline-danger btn-sm btn-block">Delete</button>
                     </a>
                   </td>
@@ -140,5 +140,14 @@
 //     } );
 // } );
   
+</script>
+<script LANGUAGE="JavaScript">
+  function myFunction() {
+      var agree=confirm("Are you sure you want to proceed?");
+      if (agree)
+      return true ;
+      else
+      return false ;
+  }
 </script>
 {% endblock %}

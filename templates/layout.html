@@ -92,11 +92,11 @@
           <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>
         </div>
       </li> -->
-      <li class="nav-item">
-        <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+      <!-- <li class="nav-item">
+        <a class="nav-link" href="/signout" role="button">
           <i>Logout</i>
         </a>
-      </li>
+      </li> -->
       <li class="nav-item">
         <a class="nav-link" data-widget="fullscreen" href="#" role="button">
           <i class="fas fa-expand-arrows-alt"></i>
@@ -127,7 +127,7 @@
           <img src="{{ url_for('static', filename='AdminLTE-master/dist/img/user2-160x160.png') }}" class="img-circle elevation-2" alt="User Image">
         </div>
         <div class="info">
-          <a href="#" class="d-block">Gym - Fitness Pro</a>
+          <a href="/" class="d-block">Gym - Fitness Pro</a>
         </div>
       </div>
 
@@ -209,7 +209,7 @@
           </li>
           <li class="nav-item">
             <a href="/completed-sessions" class="nav-link">
-              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <i class="nav-icon fas fa-table"></i>
               <p>
                 Completed Sessions
               </p>
@@ -217,7 +217,7 @@
           </li>
           <li class="nav-item">
             <a href="/newaccounts" class="nav-link">
-              <i class="nav-icon fas fa-th"></i>
+              <i class="nav-icon fas fa-table"></i>
               <p>
                 Signedin Accounts
                 <span class="right badge badge-danger">New</span>
@@ -506,10 +506,18 @@
             </ul>
           </li>
           <li class="nav-item">
-            <a href="/superadmin-settings" class="nav-link">
+            <a href="/settings" class="nav-link">
               <i class="nav-icon fas fa-table"></i>
               <p>
                 SuperAdmin Settings
+              </p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="/signout" class="nav-link">
+              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <p>
+                Sign Out
               </p>
             </a>
           </li>
@@ -922,7 +930,7 @@
   </div>
   <!-- /.content-wrapper -->
   <footer class="main-footer">
-    <strong>Copyright &copy; 2021-2021 | All rights reserved | Fitness App  Powered by <a href="https://www.webtrica.com/">Webtrica</a>.</strong>
+    <strong>Copyright &copy; 2021 | All rights reserved | Fitness App  Powered by <a href="https://www.webtrica.com/">Webtrica</a>.</strong>
     <!-- <div class="float-right d-none d-sm-inline-block">
       <b>Version</b> 3.1.0-rc
     </div> -->

@@ -53,7 +53,7 @@
                                                 class="btn-outline-info btn-sm btn-block">Edit</button></a>
                                     </td>
                                     <td>
-                                        <a href="/delete/promo/{{ promo._id }}"><button type="button"
+                                        <a href="/delete/promo/{{ promo._id }}"><button onclick="return myFunction()" type="button"
                                                 class="btn-outline-danger btn-sm btn-block">Delete</button>
                                         </a>
                                     </td>
@@ -122,5 +122,14 @@
 //     } );
 // } );
 
+</script>
+<script LANGUAGE="JavaScript">
+    function myFunction() {
+        var agree=confirm("Are you sure you want to proceed?");
+        if (agree)
+        return true ;
+        else
+        return false ;
+    }
 </script>
 {% endblock %}

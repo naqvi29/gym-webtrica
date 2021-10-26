@@ -65,7 +65,7 @@
                     </a>
                   </td>
                   <td>
-                    <a href="/delete/customers-{{ customers._id }}"><button type="button"
+                    <a href="/delete/customers-{{ customers._id }}"><button onclick="return myFunction()" type="button"
                         class="btn-outline-danger btn-sm btn-block">Delete</button>
                     </a>
                   </td>
@@ -128,5 +128,14 @@
       "responsive": true,
     });
   });
+</script>
+<script LANGUAGE="JavaScript">
+  function myFunction() {
+      var agree=confirm("Are you sure you want to proceed?");
+      if (agree)
+      return true ;
+      else
+      return false ;
+  }
 </script>
 {% endblock %}

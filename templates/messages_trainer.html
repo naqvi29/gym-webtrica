@@ -3,7 +3,7 @@
 {% block head %}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Messages</title>
+<title>Messages | Trainers</title>
 
 <!-- Google Font: Source Sans Pro -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -39,6 +39,8 @@
                   <th>Message</th>
                   <th>Email</th>
                   <th>Time</th>
+                  <th>Action</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -54,7 +56,7 @@
                     </a>
                   </td>
                   <td>
-                    <a href="/delete/messages/{{ messages._id }}"><button type="button"
+                    <a href="/delete/messages/{{ messages._id }}"><button onclick="return myFunction()" type="button"
                         class="btn-outline-danger btn-sm btn-block">Delete</button>
                     </a>
                   </td>
@@ -123,5 +125,14 @@
 //     } );
 // } );
   
+</script>
+<script LANGUAGE="JavaScript">
+  function myFunction() {
+      var agree=confirm("Are you sure you want to proceed?");
+      if (agree)
+      return true ;
+      else
+      return false ;
+  }
 </script>
 {% endblock %}
