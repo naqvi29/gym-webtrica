@@ -17,7 +17,9 @@
   <link rel="stylesheet" href="/static/AdminLTE-master/dist/css/adminlte.min.css">
 </head>
 
-<body class="hold-transition login-page">
+<!-- <body class="hold-transition login-page"> -->
+<body class="row">
+  <div class="container-fluid w-50 mx-auto">
     <div class="login-box">
       <div class="login-logo">
         <b>Super Admin</b>
@@ -25,7 +27,7 @@
       <!-- /.login-logo -->
       <div class="card">
         <div class="card-body login-card-body">
-          <p class="login-box-msg">Sign in to access dashboard</p>
+          <p class="login-box-msg">Sign in to start your session</p>
 
           <form action="/signin" method="post">
             <div class="input-group mb-3">
@@ -84,7 +86,7 @@
       </div>
       <!-- /.login-box -->
     </div>
-  
+  </div>
 
     <!-- jQuery -->
     <!-- <script src="{{ url_for('static', filename='AdminLTE-master/plugins/jquery/jquery.min.js') }}"></script> -->

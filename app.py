@@ -19,7 +19,8 @@ from datetime import datetime
 import random
 import string
 import stripe
-
+from flask_mail import Mail, Message
+import time
 
 
 app = Flask(__name__)
@@ -59,6 +60,8 @@ socketio = SocketIO(app)
 
 def id_generator(size=8, chars=string.ascii_uppercase + string.digits + string.ascii_lowercase):
     return ''.join(random.choice(chars) for _ in range(size))
+def id_generator2(size=4, chars=string.ascii_uppercase + string.digits + string.ascii_lowercase):
+    return ''.join(random.choice(chars) for _ in range(size))
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -67,6 +70,19 @@ def allowed_file(filename):
 
 # configure secret key for session
 app.secret_key = '_5#y2L"F4Q8z\n\xec]/'
+
+# Mail server config.
+
+app.config['MAIL_DEBUG'] = True
+app.config['MAIL_SERVER'] = 'smtp.ionos.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = 'testing@web-designpakistan.com'
+app.config['MAIL_PASSWORD'] = 'Lawrence1234**'
+app.config['MAIL_DEFAULT_SENDER'] = ('testing@web-designpakistan.com')
+
+mail = Mail(app)
 
 
 # Homepage route
@@ -87,9 +103,10 @@ def index():
         C_ten_training = db.bookings.count({'package_type': 'Training-10','completed':True})
         C_mud_scheme = db.bookings.count({'package_type': 'Mud-Scheme','completed':True})
         C_training_scheme = db.bookings.count({'package_type': 'Training-Scheme','completed':True})
+        current_year = datetime.now().year
 
         # return render_template("home.html")
-        return render_template("index.html",totalcustomers = totalcustomers,totaltrainers=totaltrainers,totalcompany=totalcompany,totalgyms=totalgyms,I_one_training=I_one_training,I_five_training=I_five_training,I_ten_training=I_ten_training,I_mud_scheme=I_mud_scheme,I_training_scheme=I_training_scheme,C_one_training=C_one_training,C_five_training=C_five_training,C_ten_training=C_ten_training,C_mud_scheme=C_mud_scheme,C_training_scheme=C_training_scheme)
+        return render_template("index.html",totalcustomers = totalcustomers,totaltrainers=totaltrainers,totalcompany=totalcompany,totalgyms=totalgyms,I_one_training=I_one_training,I_five_training=I_five_training,I_ten_training=I_ten_training,I_mud_scheme=I_mud_scheme,I_training_scheme=I_training_scheme,C_one_training=C_one_training,C_five_training=C_five_training,C_ten_training=C_ten_training,C_mud_scheme=C_mud_scheme,C_training_scheme=C_training_scheme, current_year=current_year)
     else:
         # Admin is not loggedin show them the login page
         return redirect(url_for('signin'))
@@ -1706,7 +1723,13 @@ def customer_bookings(id):
 def trainer_bookings(id):
     try:
         if request.method == "GET":
-            query = {'trainer_id': id,"completed":False} 
+            # today = time.strftime("%d/%m/%Y")
+            # today_format = datetime.strptime(today, "%d/%m/%Y")
+            # exp_date = str(today_format + datetime.timedelta(days=365)).split(" ")
+            # exp = exp_date[0]
+            # return jsonify({"date":exp})
+            # query = {'trainer_id': id,"completed":False, "date": {"$gt": today_format } }
+            query = {'trainer_id': id,"completed":False,}
             booking_data = db.bookings.find(query)
             lists = []
             for i in booking_data:
@@ -2014,8 +2037,8 @@ def toggle_trainer_status_api(id):
         return jsonify({"success": False, "error": str(e)})
 
 # ************ UPDATE TRAINER RATING API ************
-@app.route("/trainer-rating-api/<id>", methods=["POST"])
-def trainer_rating_api(id):
+@app.route("/trainer-rating-api/<id>/<sessionid>", methods=["POST"])
+def trainer_rating_api(id, sessionid):
     try:
         if request.method == "POST":
             if request.is_json:            
@@ -2057,6 +2080,11 @@ def trainer_rating_api(id):
                         trainer_data = db.trainers.find_one(query)
                         newData = {'$set':{"rating":str(total_rating)}}
                         db.trainers.update_one(trainer_data, newData)
+
+                        # now update ratings into sessions table 
+                        query = {'_id': ObjectId(sessionid)}
+                        newvalue = {'$set':{"rating":str(rating)}} 
+                        db.sessions.update_one(query,newvalue)
 
                         return jsonify({
                             "success": True, "status": "Ratings Updated.","total Rating":total_rating
@@ -2191,12 +2219,7 @@ def add_mudscheme_for_customer_api(id):
 
             if mudscheme and allowed_file(mudscheme.filename):
                 filename = secure_filename(mudscheme.filename)
-                mudscheme.save(
-                    os.path.join(app.config['UPLOAD_FOLDER5'], filename))
-                # compress image
-                # newimage = Image.open(os.path.join(app.config['UPLOAD_FOLDER5'], str(filename)))
-                # newimage.thumbnail((400, 400))
-                # newimage.save(os.path.join(UPLOAD_FOLDER5, str(filename)), quality=95)
+                mudscheme.save(os.path.join(app.config['UPLOAD_FOLDER5'], filename))
             else:
                 return jsonify({
                     "success": False,
@@ -2206,7 +2229,7 @@ def add_mudscheme_for_customer_api(id):
             customerdata = db.customers.find_one(query)
             if customerdata is not None:
                 newvalues = {"$set": {
-                    'mud_scheme': filename }}                
+                    'mud_scheme': str(filename) }}                
                 db.customers.update_one(query, newvalues)
                 return jsonify({"success":True,"mudscheme":filename})
             else:
@@ -2283,7 +2306,7 @@ def validate_promocode_api():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
-# mark-complete session 
+# ************ MARK COMPLETE SESSION ************
 @app.route("/mark-complete-session/<string:bookingid>")
 def mark_complete_session(bookingid):
     try:
@@ -2303,6 +2326,12 @@ def mark_complete_session(bookingid):
                 'location': booking['location'],
                 'package': booking['package_type'],
                 'customer_profile_pic': booking['customer_profile_pic'],
+                'customer_profile_pic_path': "static/images/customers/profile-pics",
+                'trainer_profile_pic': booking['trainer_profile_pic'],
+                'trainer_profile_pic_path': "static/images/trainers/trainer-profile-pics",
+                'booking_time': booking['booking_time'],
+                'date': booking['date'],
+                'rating':"pending",
                 'completed': True,
 
         }
@@ -2310,6 +2339,232 @@ def mark_complete_session(bookingid):
         return jsonify({"success": True,})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
+
+# ************ GET CUSTOMER's COMPLETED SESSIONS ************
+@app.route("/get-customer-completed-sessions-api/<id>", methods=["GET"])
+def get_customer_complete_sessions_api(id):
+    try:
+        if request.method == "GET":
+            query = {'customer_id': id, 'completed':True}
+            user_data = db.sessions.find(query)
+            if user_data is not None:
+                lists = []
+                # for loop
+                for i in user_data:
+                    i.update({"_id": str(i["_id"])})
+                    lists.append(i)
+                # end forloop
+                return jsonify({"success": True, "sessions": lists})                
+            else:
+                return jsonify({
+                    "success": False, "error": "Invalid User."
+                })
+        else:
+            return jsonify({"success": False, "error": "Invalid request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+# ************ FORGOT PASSWORD API ************
+@app.route("/forgot-password-api", methods=["POST", "GET"])
+def forgot_password_api():
+    try:
+        if request.is_json:
+            if request.method == "POST":
+                data = request.get_json()
+                email = data["email"]
+                query = {"email": email}
+                customer_data = db.customers.find_one(query)
+                company_data = db.company.find_one(query)
+                trainer_data = db.trainers.find_one(query)
+                if customer_data is None and company_data is None and trainer_data is None:
+                    return jsonify({"success":False, "error":"User didn't exist with this email"})
+                if customer_data is not None:
+                    code = id_generator2()
+                    msg = Message("Gym! Forgot Password Code", recipients=[email])
+                    msg.html = str("To update password of your account use the following code "
+                                    "as confirmation code " + str(code))
+                    mail.send(msg)
+                    newvalues = {"userid": customer_data['_id'], "code":code, "user_account":"customer", "status":True, "time":datetime.now()}
+                    db.change_password.insert_one(newvalues)
+                    return jsonify(
+                        {"msg": "Please check your email to update your password.",
+                            "name": customer_data["first_name"], "email": customer_data['email'], 'userid':str(customer_data['_id']),
+                            "success": True})
+                if company_data is not None:
+                    # if email == user_data1['email']:
+                    code = id_generator2()
+                    msg = Message("Gym! Forgot Password Code", recipients=[email])
+                    msg.html = str("To update password of your account use the following code "
+                                    "as confirmation code " + str(code))
+                    mail.send(msg)
+                    newvalues = {"userid": company_data['_id'], "code":code, "user_account":"company", "status":True, "time":datetime.now()}
+                    db.change_password.insert_one(newvalues)
+                    # cursor.execute('''insert into change_password (user_id, code) 
+                    # values (%s, %s);''', [user_data[0], code])
+                    return jsonify(
+                        {"msg": "Please check your email to update your password.",
+                            "name": company_data["company_name"], "email": company_data['email'], 'userid':str(company_data['_id']),
+                            "success": True})
+                    # else:
+                    #     return jsonify({"success": False, "error": "Invalid contact number of user."})
+                if trainer_data is not None:
+                    # if email == user_data1['email']:
+                    code = id_generator2()
+                    msg = Message("Gym! Forgot Password Code", recipients=[email])
+                    msg.html = str("To update password of your account use the following code "
+                                    "as confirmation code " + str(code))
+                    mail.send(msg)
+                    newvalues = {"userid": trainer_data['_id'], "code":code, "user_account":"trainer", "status":True, "time":datetime.now()}
+                    db.change_password.insert_one(newvalues)
+                    # cursor.execute('''insert into change_password (user_id, code) 
+                    # values (%s, %s);''', [user_data[0], code])
+                    return jsonify(
+                        {"msg": "Please check your email to update your password.",
+                            "name": trainer_data["first_name"], "email": trainer_data['email'], 'userid':str(trainer_data['_id']),
+                            "success": True})
+                    # else:
+                    #     return jsonify({"success": False, "error": "Invalid contact number of user."})
+                else:
+                    return jsonify({"success": False, "error": "Invalid User or user doesn't exist."})
+            else:
+                return jsonify({"success": False, "error": "Invalid request"})
+        else:
+            return jsonify({"success": False, "error": "Invalid request not json format"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+# ************ UPATE PASSWORD FROM EMAIL CODE ************
+@app.route("/update-password-api", methods=["POST", "GET"])
+def update_password_api():
+    try:
+        if request.is_json:
+            if request.method == "POST":
+                data = request.get_json()
+                user_id = data["user_id"]
+                email = data["email"]
+                password = data["newpassword"]
+                code = data["code"]
+                query = {"email": email}
+                customer_data = db.customers.find_one(query)
+                company_data = db.company.find_one(query)
+                trainer_data = db.trainers.find_one(query)
+                if customer_data is None and company_data is None and trainer_data is None:
+                    return jsonify({"success":False, "error":"User didn't exist with this email"})
+                if customer_data is not None:
+                    query = {"userid":ObjectId(user_id), "status":True}
+                    user_code = db.change_password.find_one(query)
+                    if user_code is not None:
+                        if code == user_code['code']:
+                            if user_code['status'] is not False:
+                                hash_password = generate_password_hash(password)
+                                newvalues = {
+                                            "$set": {
+                                                'password': password,
+                                                'hash': hash_password
+                                            }
+                                        }
+                                query = {'_id': ObjectId(user_id)}
+                                db.customers.update_one(query,newvalues)
+                                newvalues = {
+                                            "$set": {
+                                                'status': False,
+                                            }
+                                        }
+                                query = {'_id': user_code['_id']}
+                                db.change_password.update_one(query,newvalues)
+                                return jsonify({"success": True, "message": "Password Updated "
+                                                                            "successfully."})
+                            else:
+                                return jsonify({"success": False, "error": "Code is already used."})
+                        else:
+                            return jsonify({"success": False, "error": "Invalid Code."})
+                    else:
+                        return jsonify({"success": False, "error": "No change password request "
+                                                                "received."})
+                if company_data is not None:
+                    # cursor.execute('''select user_id, code, status from change_password where 
+                    # user_id=%s and status="notused" order by timestamp desc limit 1;''', [user_id])
+                    # user_code = cursor.fetchone()
+                    query = {"userid":ObjectId(user_id), "status":True}
+                    user_code = db.change_password.find_one(query)
+                    if user_code is not None:
+                        if code == user_code['code']:
+                            if user_code['status'] is not False:
+                                # cursor.execute('''Update users set password=%s
+                                # where user_id=%s  and email=%s;''', [password,
+                                #                                      user_id, email])
+                                hash_password = generate_password_hash(password)
+                                newvalues = {
+                                            "$set": {
+                                                'password': password,
+                                                'hash': hash_password
+                                            }
+                                        }
+                                query = {'_id': ObjectId(user_id)}
+                                db.company.update_one(query,newvalues)
+                                newvalues = {
+                                            "$set": {
+                                                'status': False,
+                                            }
+                                        }
+                                query = {'_id': user_code['_id']}
+                                db.change_password.update_one(query,newvalues)
+                                return jsonify({"success": True, "message": "Password Updated "
+                                                                            "successfully."})
+                            else:
+                                return jsonify({"success": False, "error": "Code is already used."})
+                        else:
+                            return jsonify({"success": False, "error": "Invalid Code."})
+                    else:
+                        return jsonify({"success": False, "error": "No change password request "
+                                                                "received."})
+                if trainer_data is not None:
+                    # cursor.execute('''select user_id, code, status from change_password where 
+                    # user_id=%s and status="notused" order by timestamp desc limit 1;''', [user_id])
+                    # user_code = cursor.fetchone()
+                    query = {"userid":ObjectId(user_id), "status":True}
+                    user_code = db.change_password.find_one(query)
+                    if user_code is not None:
+                        if code == user_code['code']:
+                            if user_code['status'] is not False:
+                                # cursor.execute('''Update users set password=%s
+                                # where user_id=%s  and email=%s;''', [password,
+                                #                                      user_id, email])
+                                hash_password = generate_password_hash(password)
+                                newvalues = {
+                                            "$set": {
+                                                'password': password,
+                                                'hash': hash_password
+                                            }
+                                        }
+                                query = {'_id': ObjectId(user_id)}
+                                db.trainers.update_one(query,newvalues)
+                                newvalues = {
+                                            "$set": {
+                                                'status': False,
+                                            }
+                                        }
+                                query = {'_id': user_code['_id']}
+                                db.change_password.update_one(query,newvalues)
+                                return jsonify({"success": True, "message": "Password Updated "
+                                                                            "successfully."})
+                            else:
+                                return jsonify({"success": False, "error": "Code is already used."})
+                        else:
+                            return jsonify({"success": False, "error": "Invalid Code."})
+                    else:
+                        return jsonify({"success": False, "error": "No change password request "
+                                                                "received."})
+            else:
+                return jsonify({"success": False, "error": "Invalid request"})
+        else:
+            return jsonify({"success": False, "error": "Invalid request not a json type data."})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
 
 
 # ************************************* CHATING START ***********************************************
@@ -2449,6 +2704,7 @@ def getmessages():
 #     return jsonify({"messages": messages})
 
 # ************************************* CHATING END ***********************************************
+
 
 # ************************************* STRIPE START ***********************************************
 @app.route("/payment-api", methods=["POST"])
