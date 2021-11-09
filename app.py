@@ -78,11 +78,17 @@ app.config['MAIL_SERVER'] = 'smtp.ionos.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = 'testing@web-designpakistan.com'
+app.config['MAIL_USERNAME'] = 'testwebtrica@gmail.com'
 app.config['MAIL_PASSWORD'] = 'Lawrence1234**'
-app.config['MAIL_DEFAULT_SENDER'] = ('testing@web-designpakistan.com')
+app.config['MAIL_DEFAULT_SENDER'] = ('testwebtrica@gmail.com')
 
 mail = Mail(app)
+
+# test-mail 
+@app.route("/send")
+def send():
+    msg = Message("Gym! Forgot Password Code", recipients=["mali29april@gmail.com"])
+    mail.send(msg)
 
 
 # Homepage route
@@ -128,11 +134,16 @@ def signin():
                 # Redirect to index page
                 return redirect(url_for('index'))
             else:
-                return jsonify({"status":False,"error":"Invalid Password"})
+                session["message"] = "Invalid Password" 
+                return redirect("/signin")
+                # return jsonify({"status":False,"error":"Invalid Password"})
         else:
-            return jsonify({"success":False, "error":"Invalid username"})
-    else:  
-        return render_template("adminlogin.html")
+            session["message"] = "Invalid Username"
+            return redirect("/signin")
+            # return jsonify({"success":False, "error":"Invalid username"}) 
+    else:
+        message = session.get("message")  
+        return render_template("adminlogin.html", message=message)
 
 # configure signout route
 @app.route('/signout')
@@ -1332,6 +1343,7 @@ def update_customer_profile_api(id):
             contact = request.form.get('contact')
             profile_pic = request.files.get('profile_pic')
             password = request.form.get('password')
+
             regex = '[^@]+@[a-zA-Z0-9]+[.][a-zA-Z]+'
             if not (re.search(regex, email)):
                 return jsonify({"success": False, "error": "invalid email"})
@@ -1395,6 +1407,7 @@ def update_customer_profile_api(id):
                         "id": str(user_data['_id']),
                         "first_name": first_name,
                         "last_name": last_name,
+                        "profile_pic":user_data['profile_pic'],
                         "email": email,
                         "contact": contact,
                         "user_type": "customer",
@@ -1420,7 +1433,8 @@ def update_trainer_profile_api(id):
             contact = request.form.get('contact')
             profile_pic = request.files.get('profile_pic')
             password = request.form.get('password')
-            bio = request.form.get('bio')
+            bio = request.form.get('bio')           
+
             regex = '[^@]+@[a-zA-Z0-9]+[.][a-zA-Z]+'
             if not (re.search(regex, email)):
                 return jsonify({"success": False, "error": "invalid email"})
@@ -1491,6 +1505,7 @@ def update_trainer_profile_api(id):
                         "id": str(user_data['_id']),
                         "first_name":first_name,
                         "last_name":last_name,
+                        "profile_pic":user_data['profile_pic'],
                         "email": email,
                         "contact": contact,
                         "user_type": "trainer",
@@ -1631,7 +1646,8 @@ def signin_api():
                                         "available_dates": trainer['available_dates'],
                                         "profile_pic_path": "static/images/trainers/trainer-profile-pics",
                                         "user_type": "trainer",
-                                        "good_to_know":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae aperiam consectetur deserunt officiis quos soluta autem placeat labore fuga, pariatur voluptatem odit similique quibusdam natus, hic exercitationem quisquam velit delectus.", 
+                                        "good_to_know":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae aperiam consectetur deserunt officiis quos soluta autem placeat labore fuga, pariatur voluptatem odit similique quibusdam natus, hic exercitationem quisquam velit delectus.",
+                                        "company_toggle":trainer['company_toggle'], 
                                         "success": True })
                     else:
                         return jsonify({
@@ -1675,6 +1691,7 @@ def trainer_package_api(id):
                     "id": str(user_data['_id']),
                     "email": str(email),
                     "packages": lists,
+                    "company_toggle":user_data['company_toggle'],
                     "success": True,
                 })
             else:
@@ -1954,36 +1971,123 @@ def add_trainer_availability_api(id):
         return jsonify({"success": False, "error": str(e)})   
 
 
-# ************ UPDATE TRAINER PACKAGES************
+# ************ UPDATE TRAINER PACKAGES************ old
 # note:yahan py id mai trainer id ayegi or package mai sirf ["1-training","5-training","10-training","Mud-scheme","training scheme"] in mai se koi 1 value aegi    
-@app.route("/update-trainer-packages-api/<id>/<package>", methods=["POST"])
-def update_trainer_packages_api(id,package):
+# @app.route("/update-trainer-packages-api/<id>/<package>", methods=["POST"])
+# def update_trainer_packages_api(id,package):
+#     try:
+#         if request.method == 'POST':      
+#             if request.is_json:
+#                 data = request.get_json()
+#                 price = data["price"]
+#                 if not price:
+#                     return jsonify({"success": False, "error": "Missing Price"})
+#                 query = {'_id': ObjectId(id)}
+#                 user_data = db.trainers.find_one(query)
+#                 if user_data is not None:
+#                     email = user_data["email"]
+#                     query = {'trainer_email': email ,'name':package}
+#                     packagedata = db.trainer_packages.find_one(query)
+#                     if not packagedata:
+#                         return jsonify ({"success": False, "error":"invalid package name in API"})
+#                     newData = {'$set':{"price": price }}
+#                     db.trainer_packages.update_one(packagedata,newData)
+#                     return jsonify ({"success": True, "newprice":price})
+#             else:
+#                 return jsonify({"success": False, "msg": "Invalid data format"})
+#         else:
+#             return jsonify({"success": False, "msg": "Invalid request"})
+
+#     except Exception as e:
+#         return jsonify({"success": False, "error": str(e)})
+    
+# ************ UPDATE TRAINER PACKAGES************ NEW
+#yahan /<id> mai package id aegi jo edit honi hai. or agar price or package_name dono edit karne hai tu dono bhejo warna sirf 1 bhi bhej sakty ho.
+@app.route("/update-trainer-packages-api/<id>", methods=["POST"])
+def update_trainer_packages_api(id):
     try:
-        if request.method == 'POST':      
-            if request.is_json:
-                data = request.get_json()
-                price = data["price"]
-                if not price:
-                    return jsonify({"success": False, "error": "Missing Price"})
-                query = {'_id': ObjectId(id)}
-                user_data = db.trainers.find_one(query)
-                if user_data is not None:
-                    email = user_data["email"]
-                    query = {'trainer_email': email ,'name':package}
-                    packagedata = db.trainer_packages.find_one(query)
-                    if not packagedata:
-                        return jsonify ({"success": False, "error":"invalid package name in API"})
-                    newData = {'$set':{"price": price }}
-                    db.trainer_packages.update_one(packagedata,newData)
+        if request.method == 'POST':
+            name = None
+            if request.form.get('package_name'):
+                name = request.form.get('package_name')
+            price = None
+            if request.form.get('price'):
+                price = request.form.get('price')
+            if not request.form.get('package_name') and not request.form.get('price'):
+                return jsonify({"success": False, "error": "Missing Price and name"})                
+            query = {'_id': ObjectId(id)}
+            package_data = db.trainer_packages.find_one(query)
+            if package_data is not None:
+                if name == None:
+                    newData = {'$set':{"price": price}}
+                    db.trainer_packages.update_one(package_data,newData)
                     return jsonify ({"success": True, "newprice":price})
+                elif price == None:
+                    newData = {'$set':{"name":name}}
+                    db.trainer_packages.update_one(package_data,newData)
+                    return jsonify ({"success": True, "newname":name})
+                else:
+                    newData = {'$set':{"name":name, "price":price}}
+                    db.trainer_packages.update_one(package_data,newData)
+                    return jsonify ({"success": True, "newname":name,"newprice":price})
             else:
-                return jsonify({"success": False, "msg": "Invalid data format"})
+                return jsonify ({"success": False, "error":"invalid package id"})
         else:
             return jsonify({"success": False, "msg": "Invalid request"})
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
-    
+
+# ************ ADD TRAINER PACKAGES************
+#yahan /<id> mai trainer ki id aegi jis trainer keliye package add karwana hai.
+@app.route("/add-trainer-packages-api/<id>", methods=["POST"])
+def add_trainer_packages_api(id):
+    try:
+        if request.method == 'POST':
+            name = request.form.get('package_name')
+            price = request.form.get('price')
+            if not name or not price:
+                return jsonify({"success": False, "error": "Missing Price and name"})                
+            query = {'_id': ObjectId(id)}            
+            trainer_data = db.trainers.find_one(query)
+            if trainer_data is not None:
+                email = trainer_data['email']
+            else:
+                return jsonify({"status":False,"error":"Invalid trainer id or trainer doesn't exist"})
+            query = {'trainer_email': email,'name':name}
+            package_data = db.trainer_packages.find_one(query)
+            if package_data is None:
+                newData = {"price": price,"name":name,"desc":"lorem","trainer_email":email}
+                db.trainer_packages.insert_one(newData)
+                return jsonify ({"success": True, "status":"Package Added"})
+            else:
+                return jsonify ({"success": False, "error":"Package already exist"})
+        else:
+            return jsonify({"success": False, "msg": "Invalid request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+# ************ DELETE TRAINER PACKAGES************
+#yahan /<id> mai package ki id aegi jo delete karwana hai.
+@app.route("/delete-trainer-packages-api/<id>", methods=["POST"])
+def delete_trainer_packages_api(id):
+    try:
+        if request.method == 'POST':                         
+            query = {'_id': ObjectId(id)}
+            package_data = db.trainer_packages.find_one(query)
+            if package_data is not None:
+                db.trainer_packages.delete_one(query)
+                return jsonify ({"success": True, "status":"Package Deleted"})
+            else:
+                return jsonify ({"success": False, "error":"Package doesn't exist"})
+        else:
+            return jsonify({"success": False, "msg": "Invalid request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
 # ************ GET TRAINER's COMPLETED SESSIONS ************
 @app.route("/get-trainer-completed-sessions-api/<id>", methods=["GET"])
 def get_trainer_complete_sessions_api(id):
@@ -2565,74 +2669,220 @@ def update_password_api():
         return jsonify({"success": False, "error": str(e)})
 
 
+# ************ UPDATE BOOKINGS API ************
+@app.route("/update-bookings-api", methods=["POST", "GET"])
+def update_bookings_api(): 
+    try:   
+        if request.method == "POST":
+            if request.is_json:
+                data = request.get_json()
+                customer_id = data['customer_id']
+                trainer_id = data['trainer_id']
+                customer_name = data['customer_name']
+                trainer_name = data['trainer_name']
+                customer_email = data['customer_email']
+                customer_profile_pic = data['customer_profile_pic']
+                package_type = data['package_type']
+                booking_time = data['booking_time']
+                booking_date = data['booking_date']
+                booking_month = data['booking_month']
+                date = data['date']
+                location = data['location']
+                latitude = data['latitude']
+                longitude = data['longitude']
+                if not customer_id or not trainer_id or not customer_name or not trainer_name or not customer_email or not customer_profile_pic or not package_type or not booking_time or not booking_date or not booking_month or not date or not location or not latitude or not longitude:
+                        return jsonify({"success": False, "error": "Missing Data in json"})
+
+                # fetch trainer profile pic 
+                query = {'_id': ObjectId(trainer_id)}
+                trainerdata = db.trainers.find_one(query)
+                
+                newAccount = {
+                                "customer_id": customer_id,
+                                "trainer_id": trainer_id,
+                                "customer_name": customer_name,
+                                "trainer_name": trainerdata['first_name'],
+                                "customer_email": customer_email,
+                                "customer_profile_pic": customer_profile_pic,
+                                "trainer_profile_pic": trainerdata['profile_pic'],
+                                "package_type": package_type,
+                                "booking_time": booking_time,
+                                "booking_date": booking_date,
+                                "booking_month": booking_month,
+                                "date": date,
+                                "location": location,
+                                "Latitude": latitude,
+                                "Longitude": longitude,
+                                # defaults 
+                                "dateAdded": datetime.now(),
+                                "customer_profile_pic_path": "static/images/customers/profile-pics",
+                                "trainer_profile_pic_path": "static/images/trainers/trainer-profile-pics",
+                                "accepted": True,
+                                "completed": False,
+                            }
+                db.bookings.insert_one(newAccount)
+                return jsonify({
+                    "success": True,
+                    "message": "Booking done successfully"
+                })      
+            else:
+                return jsonify({"success":False , "error": "Invalid json format"})
+        else:
+            return jsonify({"success":False , "error": "Invalid request"})
+    except Exception as e:
+            return jsonify({"status": str(e)})
+
+
+# ************ COMPANY DATA API ************
+@app.route("/get-company-api", methods=["POST", "GET"])
+def get_company_api(): 
+    try: 
+        if request.method == "GET":
+            outdoor = db.trainers.find({"status":True , "company":"outdoor"}, {"password": 0, "hash": 0})
+            outdoorlists = []
+            for i in outdoor:
+                i.update({"_id": str(i["_id"])})
+                outdoorlists.append(i)
+                print(outdoorlists, "hello")
+            indoor = db.trainers.find({"status":True , "company":"indoor"}, {"password": 0, "hash": 0})
+            indoorlists = []
+            for i in indoor:
+                i.update({"_id": str(i["_id"])})
+                indoorlists.append(i)
+                print(indoorlists, "hello")
+            boxing = db.trainers.find({"status":True , "company":"boxing"}, {"password": 0, "hash": 0})
+            boxinglists = []
+            for i in boxing:
+                i.update({"_id": str(i["_id"])})
+                boxinglists.append(i)
+                print(boxinglists, "hello")
+            return jsonify({"success": True, "outdoor training": outdoorlists, "indoor training": indoorlists , "boxing": boxinglists})
+        else:
+            return jsonify({"success": False, "msg": "Invalid request method"})
+
+    except Exception as e:
+            return jsonify({"status": str(e)})
+
+
+# ************ ADD YOUTUBE VIDEO LINK API ************
+# <id> mai trainer ki id aegi 
+@app.route("/add-video-api/<id>", methods=["POST", "GET"])
+def add_video_api(id):
+    try: 
+        if request.method == "POST":
+            video_link = request.form.get("video")
+            if not video_link:
+                return jsonify({"success":False,"error":"missing url"})
+            query = {'_id': ObjectId(id)}
+            trainer_data = db.trainers.find_one(query)
+            if trainer_data is not None:
+                newlink = {"$set": {'link': video_link}}
+                db.trainers.update_one(query, newlink)
+                return jsonify({"success":True,"status":"Link Updated"})
+            else:
+                return jsonify({"success":False,"error":"Invalid trainer id"})
+        else:
+            return jsonify({"success": False, "msg": "Invalid request method"})
+
+    except Exception as e:
+            return jsonify({"status": str(e)})
+
+
+# ************ COMPANY TOGGLE UPDATE API FOR TRAINER PACKAGES SCREEN ************
+# <id> mai trainer ki id aegi 
+@app.route("/company-toggle-update-api/<id>", methods=["POST", "GET"])
+def add_toggle_update_api(id):
+    try: 
+        if request.method == "POST":
+            query = {'_id': ObjectId(id)}
+            trainerdata = db.trainers.find_one(query)
+            if trainerdata is not None:
+                toggle = trainerdata['company_toggle']
+                if toggle is True:
+                    newtoggle = {"$set": {'company_toggle': False}}
+                    db.trainers.update_one(query,newtoggle)
+                    return jsonify({"success":True,"status":"Company deactivated"})
+                elif toggle is False:
+                    newtoggle = {"$set": {'company_toggle': True}}
+                    db.trainers.update_one(query,newtoggle)
+                    return jsonify({"success":True,"status":"Company activated"})
+            else:
+                return jsonify({"success":False,"error":"Invalid trainer id"})
+        else:
+            return jsonify({"success": False, "msg": "Invalid request method"})
+
+    except Exception as e:
+            return jsonify({"status": str(e)})
+
+
 
 
 # ************************************* CHATING START ***********************************************
 
-@app.route('/chat-api', methods=["GET", "POST"])
+@app.route("/chat-api", methods=["GET", "POST"])
 def chatapi():
-        try:
-            if request.method == "POST":
-                return redirect("/chat")
-            else:
-                username = ""
-                # if session.get("username"):
-                #     username = session.get("username")
-                if request.args.get("username"):
-                    username = request.args.get("username")
-                customerid = ""
-                # if session.get("userid"):
-                #     userid = session.get("userid")
-                if request.args.get("customerid"):
-                    customerid = request.args.get("customerid")
-                # chatTable = mydb["chating"]
-                chatTable = db.chating
-                # userTable = mydb["customers"]
-                userTable = db.customers
-                # trainerTable = mydb["trainers"]
-                trainerTable = db.trainers
-                trainerid = "NULL"
-                if request.args.get("trainerid"):
-                    trainerid = request.args.get('trainerid')
-                if request.args.get("userType"):
-                    userType = request.args.get("userType")
-                # if customers wants to start a chat with trainer
-                if trainerid != "NULL" and userType == "customer":
-                    chatdata = chatTable.find_one({"customerid" :ObjectId(customerid), "trainerid": ObjectId(trainerid)})
-                    trainerdata = trainerTable.find_one({"_id": ObjectId(trainerid)})
-                    if chatdata == None:
-                        roomname = id_generator()
-                        chatTable.insert_one({"customerid": ObjectId(customerid), "customerName": username, "trainerid":
-                            ObjectId(trainerid), "user2name": trainerdata["first_name"], "lastmessagecount": 0,
-                                              "roomname": roomname,"accepted": False,
-                                              "lastmessagetime": datetime.now(), "messages": []})
-                # if trainer wants to start a chat with customer 
-                elif customerid != "NULL" and userType == "trainer":
-                    chatdata = chatTable.find_one({"customerid" :ObjectId(customerid), "trainerid": ObjectId(trainerid)})
-                    customerdata = userTable.find_one({"_id": ObjectId(customerid)})
-                    trainerdata = trainerTable.find_one({"_id": ObjectId(trainerid)})
-                    if chatdata == None:
-                        roomname = id_generator()
-                        chatTable.insert_one({"customerid": ObjectId(customerid), "customerName": customerdata["first_name"], "trainerid":
-                            ObjectId(trainerid), "user2name": trainerdata["first_name"], "lastmessagecount": 0,
-                                            "roomname": roomname,"accepted": True,
+    try:
+        if request.method == "POST":
+            return redirect("/chat")
+        else:
+            username = ""
+            # if session.get("username"):
+            #     username = session.get("username")
+            if request.args.get("username"):
+                username = request.args.get("username")
+            customerid = "NULL"
+            # if session.get("userid"):
+            #     userid = session.get("userid")
+            if request.args.get("customerid"):
+                customerid = request.args.get("customerid")
+            # chatTable = mydb["chating"]
+            chatTable = db.chating
+            # userTable = mydb["customers"]
+            userTable = db.customers
+            # trainerTable = mydb["trainers"]
+            trainerTable = db.trainers
+            trainerid = "NULL"
+            if request.args.get("trainerid"):
+                trainerid = request.args.get('trainerid')
+            if request.args.get("userType"):
+                userType = request.args.get("userType")
+            # if customers wants to start a chat with trainer
+            if trainerid != "NULL" and userType == "customer":
+                chatdata = chatTable.find_one({"customerid" :ObjectId(customerid), "trainerid": ObjectId(trainerid)})
+                trainerdata = trainerTable.find_one({"_id": ObjectId(trainerid)})
+                if chatdata == None:
+                    roomname = id_generator()
+                    chatTable.insert_one({"customerid": ObjectId(customerid), "customerName": username, "trainerid":
+                        ObjectId(trainerid), "user2name": trainerdata["first_name"], "lastmessagecount": 0,
+                                            "roomname": roomname,"accepted": False,
                                             "lastmessagetime": datetime.now(), "messages": []})
+            # if trainer wants to start a chat with customer 
+            elif customerid != "NULL" and userType == "trainer":
+                chatdata = chatTable.find_one({"customerid" :ObjectId(customerid), "trainerid": ObjectId(trainerid)})
+                customerdata = userTable.find_one({"_id": ObjectId(customerid)})
+                trainerdata = trainerTable.find_one({"_id": ObjectId(trainerid)})
+                if chatdata == None:
+                    roomname = id_generator()
+                    chatTable.insert_one({"customerid": ObjectId(customerid), "customerName": customerdata["first_name"], "trainerid":
+                        ObjectId(trainerid), "user2name": trainerdata["first_name"], "lastmessagecount": 0,
+                                        "roomname": roomname,"accepted": True,
+                                        "lastmessagetime": datetime.now(), "messages": []})
 
-                
+            
 
-                if userType == "trainer":
-                    data = chatTable.find({"trainerid": ObjectId(trainerid)})
-                elif userType == "customer":
-                    data = chatTable.find({"customerid": ObjectId(customerid)})
+            if userType == "trainer":
+                data = chatTable.find({"trainerid": ObjectId(trainerid)})
+            elif userType == "customer":
+                data = chatTable.find({"customerid": ObjectId(customerid)})
 
-                newdata = []
-                for chats in data:
-                    chats.update({"_id": str(chats["_id"]), "trainerid": str(chats["trainerid"]), "customerid": str(chats["customerid"])})
-                    newdata.append(chats)
-                return jsonify({"data":newdata, "username":username, "userid":customerid, "trainerid":trainerid,
-                })
-        except Exception as e:
-            return jsonify({"status": str(e)})
+            newdata = []
+            for chats in data:
+                chats.update({"_id": str(chats["_id"]), "trainerid": str(chats["trainerid"]), "customerid": str(chats["customerid"])})
+                newdata.append(chats)
+            return jsonify({"data":newdata, "username":username, "userid":customerid, "trainerid":trainerid,
+            })
+    except Exception as e:
+        return jsonify({"status": str(e)})
 
 
 @socketio.on('app event')
