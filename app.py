@@ -11,7 +11,7 @@ import pymongo
 from bson.objectid import ObjectId
 from bson.json_util import dumps
 from werkzeug.utils import redirect
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash, safe_str_cmp
 from PIL import Image
 from flask_socketio import SocketIO, join_room, leave_room,emit
 import datetime
@@ -1302,7 +1302,7 @@ def trainersignup_api():
 def alltrainerdetails_api():
     try:
         if request.method == "GET":
-            trainersdata = db.trainers.find({"status":True}, {"password": 0, "hash": 0})
+            trainersdata = db.trainers.find({"status":True,"trainer_certified":"True"}, {"password": 0, "hash": 0})
             lists = []
             for i in trainersdata:
                 i.update({"_id": str(i["_id"])})
@@ -1631,24 +1631,31 @@ def signin_api():
                 elif trainer is not None:
                     hash_password = trainer['hash']
                     if check_password_hash(hash_password, password):
-                        return jsonify({"id": str(trainer['_id']),
-                                        "email": trainer['email'],
-                                        "first_name": trainer['first_name'],
-                                        "last_name": trainer['last_name'],
-                                        "contact": trainer['phone'],
-                                        "region": trainer['region'],
-                                        "trainer-profile-pic": trainer['profile_pic'],
-                                        "status": trainer['status'],
-                                        "bio": trainer['bio'],
-                                        "today": trainer['today'],
-                                        "goals": trainer['goals'],
-                                        "notes": trainer['notes'],
-                                        "available_dates": trainer['available_dates'],
-                                        "profile_pic_path": "static/images/trainers/trainer-profile-pics",
-                                        "user_type": "trainer",
-                                        "good_to_know":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae aperiam consectetur deserunt officiis quos soluta autem placeat labore fuga, pariatur voluptatem odit similique quibusdam natus, hic exercitationem quisquam velit delectus.",
-                                        "company_toggle":trainer['company_toggle'], 
-                                        "success": True })
+                        if trainer['trainer_certified'] == "True":
+                            return jsonify({"id": str(trainer['_id']),
+                                            "email": trainer['email'],
+                                            "first_name": trainer['first_name'],
+                                            "last_name": trainer['last_name'],
+                                            "contact": trainer['phone'],
+                                            "region": trainer['region'],
+                                            "trainer-profile-pic": trainer['profile_pic'],
+                                            "status": trainer['status'],
+                                            "bio": trainer['bio'],
+                                            "today": trainer['today'],
+                                            "goals": trainer['goals'],
+                                            "notes": trainer['notes'],
+                                            "available_dates": trainer['available_dates'],
+                                            "profile_pic_path": "static/images/trainers/trainer-profile-pics",
+                                            "user_type": "trainer",
+                                            "good_to_know":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae aperiam consectetur deserunt officiis quos soluta autem placeat labore fuga, pariatur voluptatem odit similique quibusdam natus, hic exercitationem quisquam velit delectus.",
+                                            "company_toggle":trainer['company_toggle'],
+                                            "trainer_certified":True, 
+                                            "success": True })
+                        elif trainer['trainer_certified'] == "False":
+                            return jsonify({"id": str(trainer['_id']),
+                                            "email": trainer['email'],
+                                            "trainer_certified":False,
+                                            "success":True })
                     else:
                         return jsonify({
                             "success": False,
@@ -1735,7 +1742,7 @@ def customer_bookings(id):
         return jsonify({"success": False, "error": str(e)})
 
 
-# ************ BOOKINGS FOR TRAINERS ************
+# ************ UPCOMING ACCEPTED BOOKINGS FOR TRAINERS ************
 @app.route("/trainer-bookings-api/<string:id>")
 def trainer_bookings(id):
     try:
@@ -1746,7 +1753,7 @@ def trainer_bookings(id):
             # exp = exp_date[0]
             # return jsonify({"date":exp})
             # query = {'trainer_id': id,"completed":False, "date": {"$gt": today_format } }
-            query = {'trainer_id': id,"completed":False,}
+            query = {'trainer_id': id,"completed":False, 'accepted':True}
             booking_data = db.bookings.find(query)
             lists = []
             for i in booking_data:
@@ -1761,7 +1768,36 @@ def trainer_bookings(id):
                 })
             else:
                 return jsonify({
-                    "success": False, "error": "Invalid Booking."
+                    "success": False, "error": "No Bookings found"
+                })
+        else:
+            return jsonify({"success": False, "error": "Invalid request"})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+# ************ WAITING OR DECLINED BOOKINGS FOR TRAINERS ************
+@app.route("/trainer-bookings-waiting-api/<id>")
+def trainer_waiting_bookings(id):
+    try:
+        if request.method == "GET":
+            query = {'trainer_id': id,"completed":False,'accepted':False}
+            booking_data = db.bookings.find(query)
+            lists = []
+            for i in booking_data:
+                i.update({"_id": str(i["_id"])})
+                lists.append(i)
+                print(lists)
+            booking_data = db.bookings.find(query)
+            if booking_data is not None:
+                return jsonify({
+                    "booking_data": lists,
+                    "success": True,
+                })
+            else:
+                return jsonify({
+                    "success": False, "error": "No Bookings found."
                 })
         else:
             return jsonify({"success": False, "error": "Invalid request"})
@@ -1920,6 +1956,56 @@ def update_trainer_stats_api(id):
         return jsonify({"success": False, "error": str(e)})
 
 
+# ************ ADD TRAINER AVAILABILITY************ old not used
+# @app.route("/add-trainer-availability-api/<id>", methods=["POST"])
+# def add_trainer_availability_api(id):
+#     try:
+#         if request.method == 'POST':      
+#             if request.is_json: 
+#                 data = request.get_json()
+#                 session = data["session"]
+#                 date = data["date"]
+#                 starttime = data["start-time"]
+#                 endtime = data["end-time"]
+#                 if not session or not date or not starttime or not endtime:
+#                         return jsonify({"success": False, "error": "Missing details"})
+#                 query = {'_id': ObjectId(id)}
+#                 user_data = db.trainers.find_one(query)
+#                 if user_data is not None:
+#                     available_dates = user_data["available_dates"]
+#                     # output
+#                     # [{'session': 'boxing', 'date': '17 OCT', 'time': '04-05'}, {'session': 'indoor', 'date': '18 OCT', 'time': '05-06'},
+#                     # {'session': 'outdoor', 'date': '19 OCT', 'time': '06-07'}, {'session': 'indoor', 'date': '22 OCT', 'time': '07-08'},
+#                     # {'session': 'boxing', 'date': '24 OCT', 'time': '08-09'}]
+                    
+#                     # Modify old data to updated data 
+#                     newtime = {"session":session,"date":date,"start-time":starttime, "end-time":endtime, "select-date":False}
+#                     available_dates.append(newtime)
+#                     # output
+#                     # [{'session': 'boxing', 'date': '17 OCT', 'time': '04-05'}, {'session': 'indoor', 'date': '18 OCT', 'time': '05-06'},
+#                     # {'session': 'outdoor', 'date': '19 OCT', 'time': '06-07'}, {'session': 'indoor', 'date': '22 OCT', 'time': '07-08'},
+#                     # {'session': 'boxing', 'date': '24 OCT', 'time': '08-09'}, {'session': 'mysession', 'date': '04 Oct', 'time': '04-05'}]
+
+#                     # replace old data with new data into db 
+#                     newData = {'$set':{"available_dates":available_dates }}
+#                     db.trainers.update_one(query,newData)
+#                     return jsonify({    
+#                         "id": str(user_data['_id']),
+#                         # "available_dates": str(available_dates),
+#                         "success": True,
+#                     })
+#                 else:
+#                     return jsonify({
+#                         "success": False, "error": "Invalid User."
+#                     })
+#             else:
+#                 return jsonify({"success": False, "msg": "Invalid data format"})
+#         else:
+#             return jsonify({"success": False, "msg": "Invalid request"})
+
+#     except Exception as e:
+#         return jsonify({"success": False, "error": str(e)})   
+
 # ************ ADD TRAINER AVAILABILITY************
 @app.route("/add-trainer-availability-api/<id>", methods=["POST"])
 def add_trainer_availability_api(id):
@@ -1927,40 +2013,24 @@ def add_trainer_availability_api(id):
         if request.method == 'POST':      
             if request.is_json: 
                 data = request.get_json()
-                session = data["session"]
                 date = data["date"]
                 starttime = data["start-time"]
                 endtime = data["end-time"]
-                if not session or not date or not starttime or not endtime:
+                if not date or not starttime or not endtime:
                         return jsonify({"success": False, "error": "Missing details"})
                 query = {'_id': ObjectId(id)}
                 user_data = db.trainers.find_one(query)
-                if user_data is not None:
-                    available_dates = user_data["available_dates"]
-                    # output
-                    # [{'session': 'boxing', 'date': '17 OCT', 'time': '04-05'}, {'session': 'indoor', 'date': '18 OCT', 'time': '05-06'},
-                    # {'session': 'outdoor', 'date': '19 OCT', 'time': '06-07'}, {'session': 'indoor', 'date': '22 OCT', 'time': '07-08'},
-                    # {'session': 'boxing', 'date': '24 OCT', 'time': '08-09'}]
-                    
-                    # Modify old data to updated data 
-                    newtime = {"session":session,"date":date,"start-time":starttime, "end-time":endtime, "select-date":False}
-                    available_dates.append(newtime)
-                    # output
-                    # [{'session': 'boxing', 'date': '17 OCT', 'time': '04-05'}, {'session': 'indoor', 'date': '18 OCT', 'time': '05-06'},
-                    # {'session': 'outdoor', 'date': '19 OCT', 'time': '06-07'}, {'session': 'indoor', 'date': '22 OCT', 'time': '07-08'},
-                    # {'session': 'boxing', 'date': '24 OCT', 'time': '08-09'}, {'session': 'mysession', 'date': '04 Oct', 'time': '04-05'}]
-
-                    # replace old data with new data into db 
-                    newData = {'$set':{"available_dates":available_dates }}
-                    db.trainers.update_one(query,newData)
-                    return jsonify({    
-                        "id": str(user_data['_id']),
-                        # "available_dates": str(available_dates),
-                        "success": True,
+                if user_data is None:
+                    return jsonify({
+                        "success": False, "error": "Invalid trainer id."
                     })
                 else:
-                    return jsonify({
-                        "success": False, "error": "Invalid User."
+                    newdata = {"trainer_id":id,"trainer_email":user_data['email'],"date":date,"start-time":starttime,"end-time":endtime,"select-date":False}
+                    db.available_dates.insert_one(newdata)
+                    return jsonify({    
+                        "id": str(user_data['_id']),
+                        "status":"date added",
+                        "success": True,
                     })
             else:
                 return jsonify({"success": False, "msg": "Invalid data format"})
@@ -2205,17 +2275,39 @@ def trainer_rating_api(id, sessionid):
         return jsonify({"success": False, "error": str(e)})
 
 
+# ************ FETCH TRAINER AVAILABLE DATES FOR CUSTOMER API ************ old
+# @app.route("/fetch-trainer-available-dates-api/<id>", methods=["GET"])
+# def fetch_trainer_available_dates_api(id):
+#     try:
+#         if request.method == "GET":
+#             query = {'_id': ObjectId(id)}
+#             trainer_data = db.trainers.find_one(query)
+#             if trainer_data is not None:
+#                 return jsonify({
+#                     "success": True, "availability":trainer_data["available_dates"]
+#                 })
+#         else:
+#             return jsonify({"success": False, "error": "Invalid request"})
+#     except Exception as e:
+#         return jsonify({"success": False, "error": str(e)})
+
 # ************ FETCH TRAINER AVAILABLE DATES FOR CUSTOMER API ************
 @app.route("/fetch-trainer-available-dates-api/<id>", methods=["GET"])
 def fetch_trainer_available_dates_api(id):
     try:
         if request.method == "GET":
-            query = {'_id': ObjectId(id)}
-            trainer_data = db.trainers.find_one(query)
-            if trainer_data is not None:
-                return jsonify({
-                    "success": True, "availability":trainer_data["available_dates"]
-                })
+            query = {'trainer_id': id}
+            
+            # fetch all available dates of trainer 
+            datesData = db.available_dates.find(query)
+            lists = []
+            # for loop
+            for i in datesData:
+                i.update({"_id": str(i["_id"])})
+                lists.append(i)
+            return jsonify({"success": True, "available dates": lists})
+            # end forloop
+            
         else:
             return jsonify({"success": False, "error": "Invalid request"})
     except Exception as e:
@@ -2717,7 +2809,8 @@ def update_bookings_api():
                                 "dateAdded": datetime.now(),
                                 "customer_profile_pic_path": "static/images/customers/profile-pics",
                                 "trainer_profile_pic_path": "static/images/trainers/trainer-profile-pics",
-                                "accepted": True,
+                                "accepted": False,
+                                "declined": False,
                                 "completed": False,
                             }
                 db.bookings.insert_one(newAccount)
@@ -2814,11 +2907,53 @@ def add_toggle_update_api(id):
     except Exception as e:
             return jsonify({"status": str(e)})
 
+# ************ ACCEPT BOOKING API FOR TRAINER ************
+# <id> mai booking id aegi 
+@app.route("/accept-booking-api/<id>")
+def accept_booking_api(id):
+    try:
+        if request.method =="GET":
+            query = {'_id':ObjectId(id)}
+            bookingdata = db.bookings.find_one(query)
+            if bookingdata is not None:
+                if bookingdata['accepted'] != True:    
+                    newvalues = {"$set": {'accepted': True,}}
+                    db.bookings.update_one(query, newvalues)
+                    return jsonify({"success":True,"status":"Booking Accepted"})
+                else:
+                    return jsonify({"success":False,"error":"Already accepted"})
+            else:
+                return jsonify({"success":False,"error":"Invalid Booking or booking doesn't Exist"})
+        else:
+            return jsonify({"success":False,"error":"Invalid request method"})
+    except Exception as e:
+        return jsonify({"status":str(e)})
 
-
+# ************ DECLINE BOOKING API FOR TRAINER ************
+# <id> mai booking id aegi 
+@app.route("/decline-booking-api/<id>")
+def decline_booking_api(id):
+    try:
+        if request.method =="GET":
+            query = {'_id':ObjectId(id)}
+            bookingdata = db.bookings.find_one(query)
+            if bookingdata is not None:
+                if bookingdata['declined'] != True:    
+                    newvalues = {"$set": {'declined': True,}}
+                    db.bookings.update_one(query, newvalues)
+                    return jsonify({"success":True,"status":"Booking Declined"})
+                else:
+                    return jsonify({"success":False,"error":"Already declined"})
+            else:
+                return jsonify({"success":False,"error":"Invalid Booking or booking doesn't Exist"})
+        else:
+            return jsonify({"success":False,"error":"Invalid request method"})
+    except Exception as e:
+        return jsonify({"status":str(e)})
 
 # ************************************* CHATING START ***********************************************
-
+# note kisi ko msg karna hai tu jis ko karna hai uski id,apni id or apni type deni hai.
+# agar sirf apna inbox kholna hai tu apni id or type deni hai sirf.
 @app.route("/chat-api", methods=["GET", "POST"])
 def chatapi():
     try:
@@ -2826,20 +2961,13 @@ def chatapi():
             return redirect("/chat")
         else:
             username = ""
-            # if session.get("username"):
-            #     username = session.get("username")
             if request.args.get("username"):
                 username = request.args.get("username")
             customerid = "NULL"
-            # if session.get("userid"):
-            #     userid = session.get("userid")
             if request.args.get("customerid"):
                 customerid = request.args.get("customerid")
-            # chatTable = mydb["chating"]
             chatTable = db.chating
-            # userTable = mydb["customers"]
             userTable = db.customers
-            # trainerTable = mydb["trainers"]
             trainerTable = db.trainers
             trainerid = "NULL"
             if request.args.get("trainerid"):
