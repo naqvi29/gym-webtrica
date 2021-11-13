@@ -21,6 +21,7 @@ import string
 import stripe
 from flask_mail import Mail, Message
 import time
+import requests
 
 
 app = Flask(__name__)
@@ -46,6 +47,7 @@ UPLOAD_FOLDER3 = join(dirname(realpath(__file__)), 'static/images/company/compan
 UPLOAD_FOLDER4 = join(dirname(realpath(__file__)), 'static/images/trainers/trainer-profile-pics')
 UPLOAD_FOLDER5 = join(dirname(realpath(__file__)), 'static/images/customers/mud-schemes')
 UPLOAD_FOLDER6 = join(dirname(realpath(__file__)), 'static/images/gyms/gym-profile-pics')
+UPLOAD_FOLDER7 = join(dirname(realpath(__file__)), 'static/images/gyms/QR-codes')
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg',}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['UPLOAD_FOLDER2'] = UPLOAD_FOLDER2
@@ -53,6 +55,7 @@ app.config['UPLOAD_FOLDER3'] = UPLOAD_FOLDER3
 app.config['UPLOAD_FOLDER4'] = UPLOAD_FOLDER4
 app.config['UPLOAD_FOLDER5'] = UPLOAD_FOLDER5
 app.config['UPLOAD_FOLDER6'] = UPLOAD_FOLDER6
+app.config['UPLOAD_FOLDER7'] = UPLOAD_FOLDER7
 
 # configure socketio 
 socketio = SocketIO(app)
@@ -965,7 +968,7 @@ def add_promo():
 
 
 
-################################################ MOBILE API'S START ##########################################################
+########################################################################################## MOBILE API'S START ######################################################################################################
  
 # ************ FOR CUSTOMERS/USERS SIGNUP ************
 @app.route("/signup-api", methods=["POST"])
@@ -2814,9 +2817,24 @@ def update_bookings_api():
                                 "completed": False,
                             }
                 db.bookings.insert_one(newAccount)
+
+                # for notification
+                header = {"Content-Type": "application/json; charset=utf-8",
+                "Authorization": "Basic MmU2ZTg3MGUtZGY4Ny00ODZkLTllNWUtOGE3ZTE0MDExOWRm"}
+                payload = {"app_id": "e93cd485-6e59-486c-a6d0-c3710a226bc3",
+                        # "include_external_user_ids": ["123456789"],
+                        "include_external_user_ids": [trainer_id],
+                        "channel_for_external_user_ids": "push",
+                        "data": {"route": "trainer-new-booking-request"},
+                        "contents": {"en": "You have a new booking request from %a" %(customer_name)}}                
+                req = requests.post("https://onesignal.com/api/v1/notifications", headers=header, data=json.dumps(payload))                
+                print(req.status_code, req.reason)
+                # end notification 
+
                 return jsonify({
                     "success": True,
-                    "message": "Booking done successfully"
+                    "message": "Booking done successfully",
+                    "Notification":"Sent"
                 })      
             else:
                 return jsonify({"success":False , "error": "Invalid json format"})
@@ -2824,6 +2842,46 @@ def update_bookings_api():
             return jsonify({"success":False , "error": "Invalid request"})
     except Exception as e:
             return jsonify({"status": str(e)})
+
+# ************ SEND NOTIFICATION AFTER CUSTOMER MADE A BOOKING TO TRAINER ************not using from here just sample code
+@app.route("/notify-booking-to-trainer", methods=['GET'])
+def notify_booking_to_trainer():
+    try:
+        import requests
+        header = {"Content-Type": "application/json; charset=utf-8",
+                "Authorization": "Basic MmU2ZTg3MGUtZGY4Ny00ODZkLTllNWUtOGE3ZTE0MDExOWRm"}
+
+        payload = {"app_id": "e93cd485-6e59-486c-a6d0-c3710a226bc3",
+                "include_external_user_ids": ["123456789"],
+                "channel_for_external_user_ids": "push",
+                "contents": {"en": "Booking from python"}}
+        
+        req = requests.post("https://onesignal.com/api/v1/notifications", headers=header, data=json.dumps(payload))
+        
+        print(req.status_code, req.reason)
+        return str(req.status_code)
+
+    except Exception as e:
+        return jsonify ({"status": str(e)})
+
+# ************ VIEW NOTIFICATIONS ************ not using from here just sample code
+@app.route("/view-notifications", methods=['GET'])
+def view_notifications():
+    try:    
+        import requests
+        import json
+
+        header = {"Content-Type": "application/json; charset=utf-8",
+                  "Authorization": "Basic MmU2ZTg3MGUtZGY4Ny00ODZkLTllNWUtOGE3ZTE0MDExOWRm"}
+
+        req = requests.get("https://onesignal.com/api/v1/notifications?app_id=e93cd485-6e59-486c-a6d0-c3710a226bc3&limit=50", headers=header)
+         
+        print(req.status_code, req.reason)
+        data = req.text
+        json.loads(data)
+        return data
+    except Exception as e:
+            return jsonify ({"status": str(e)})
 
 
 # ************ COMPANY DATA API ************
@@ -2919,6 +2977,20 @@ def accept_booking_api(id):
                 if bookingdata['accepted'] != True:    
                     newvalues = {"$set": {'accepted': True,}}
                     db.bookings.update_one(query, newvalues)
+
+                    # for notification
+                    header = {"Content-Type": "application/json; charset=utf-8",
+                    "Authorization": "Basic MmU2ZTg3MGUtZGY4Ny00ODZkLTllNWUtOGE3ZTE0MDExOWRm"}
+                    payload = {"app_id": "e93cd485-6e59-486c-a6d0-c3710a226bc3",
+                            # "include_external_user_ids": ["123456789"],
+                            "include_external_user_ids": bookingdata['customer_id'],
+                            "channel_for_external_user_ids": "push",
+                            "data": {"route": "customer-booking-accepted"},
+                            "contents": {"en": "%a accepted your booking request." %(bookingdata['trainer_name'])}}                
+                    req = requests.post("https://onesignal.com/api/v1/notifications", headers=header, data=json.dumps(payload))                
+                    print(req.status_code, req.reason)
+                    # end notification
+
                     return jsonify({"success":True,"status":"Booking Accepted"})
                 else:
                     return jsonify({"success":False,"error":"Already accepted"})
@@ -2950,6 +3022,27 @@ def decline_booking_api(id):
             return jsonify({"success":False,"error":"Invalid request method"})
     except Exception as e:
         return jsonify({"status":str(e)})
+
+# ************ CREATE QR CODE FOR EVERY GYM AT SIGNUP ************
+# pip install qrcode
+@app.route("/generate-qrcode")
+def generate_qrcode():
+    import qrcode
+    # Link for website
+    # input_data = "https://towardsdatascience.com/face-detection-in-10-lines-for-beginners-1787aa1d9127"
+    input_data = "618e3613b884f734e832711d"
+    #Creating an instance of qrcode
+    qr = qrcode.QRCode(
+            version=1,
+            box_size=10,
+            border=5)
+    qr.add_data(input_data)
+    qr.make(fit=True)
+    img = qr.make_image(fill='black', back_color='white')
+    filename = 'qrcode001-Fitness Pro -Gym.png'
+    img.save(os.path.join(app.config['UPLOAD_FOLDER7'], filename))
+    # then save filename to gym collection in database 
+    return True
 
 # ************************************* CHATING START ***********************************************
 # note kisi ko msg karna hai tu jis ko karna hai uski id,apni id or apni type deni hai.
