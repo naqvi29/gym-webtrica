@@ -1,0 +1,264 @@
+.chatlist
+{
+    background: white;
+    width: 40%;
+    border-right: 1px solid rgba(0,47,52,.2);
+}
+
+.chatdiv
+{
+	background: #ebeeef;
+    height: 440px;
+	width: 60%;
+    position: relative;
+    overflow: auto;
+    display:none;
+
+
+}
+
+#panelchat {
+  display: block;
+}
+
+
+
+#panelchat {
+
+    top: 50%;
+    margin: auto;
+    display: block;
+}
+
+.marginbottom1
+{
+    margin-bottom:100px;
+        margin-bottom: 150px !important;
+
+}
+
+.chatmobileicon
+{
+	display: none;
+}
+
+.chatlistdiv1
+{
+background: #ebeeef;
+padding: 15px;
+border-bottom: 1px solid #000;
+
+}
+
+
+.chatlistdiv1 p
+{
+    font-weight: 900;
+    margin-bottom: -5px;
+    color: black;
+
+}
+
+.chatuserimg
+{
+	margin-left: 12px;
+    width: 45px;
+}
+
+.chatlistdiv2
+{
+
+    border-bottom: 1px solid rgba(0,47,52,.2);
+    padding: 5px;
+        background: white;
+}
+
+.chatinput1
+{
+      bottom: 0px;
+    position: absolute;
+    width: 100%;
+}
+
+
+.chatinput2 {
+  padding: 10px;
+  font-size: 17px;
+  border: 1px solid grey;
+  float: left;
+  width: 90%;
+  background: white;
+}
+
+.sendbtn {
+  float: left;
+  width: 10%;
+  padding: 10px;
+  background: #2196F3;
+  color: white;
+  font-size: 17px;
+  border: 1px solid grey;
+  border-left: none;
+  cursor: pointer;
+}
+
+.usermess
+{
+	background:white;
+    width: 45%;
+    margin-top: 10px;
+    padding: 0px;
+    border-radius: 15px;
+        margin-left: 5px;
+
+}
+
+.usermesstxt{
+    color:black;
+    padding: 5px;
+    padding-left: 10px;
+}
+
+
+.sendmess
+{
+	 background: white;
+    width: 45%;
+    margin-top: 10px;
+    padding: 0px;
+    border-radius: 15px;
+    margin-right: 5px;
+    float: right;
+
+}
+
+.sendmesstxt{
+   color: black;
+    padding: 7px;
+    padding-left: 10px;
+    margin-bottom: 0px;
+}
+
+.mobileshow1
+{
+	display: none;
+}
+
+
+.messages1
+{
+    overflow: auto;
+    background: #ebeeef;
+    height: 332px;
+        flex: 1!important;
+}
+
+.message-item .options {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    opacity: 0;
+    transition: all .2s ease-in-out;
+    -moz-transition: all .2s ease-in-out;
+    -webkit-transition: all .2s ease-in-out;
+}
+/* Extra small devices (phones, 600px and down) */
+@media only screen and (max-width: 600px) {
+
+.mobileshow1
+{
+
+display: contents;
+}
+
+.chatuserimg {
+    margin-left: 5px;
+    width: 30px;
+}
+
+.username
+{
+	font-size: 12px;
+    padding-left: 0px !important;
+}
+
+
+.sendmess {
+   
+    margin-top: 0px;
+
+}
+
+.sendmesstxt {
+   
+    font-size: 12px;
+}
+
+.sendbtn {
+    width: 20%;
+    
+}
+
+.chatinput2 {
+   
+    width: 80%;
+}
+
+.chatdiv {
+    background: #ebeeef;
+    width: 100%;
+    overflow: auto;
+    margin-top: -142px;
+    height: 350px;
+}
+
+
+
+.chatlist {
+    width: 100%;
+}
+
+.showmessdiv
+{
+	display: none;
+}
+
+.chatmobileicon
+{
+  display: contents;
+}
+
+#panelchat
+{
+display:none;
+}
+
+
+.messages1 {
+    overflow: auto;
+    background: #ebeeef;
+    height: 240px;
+    flex: 1!important;
+}
+
+
+
+
+}
+
+
+
+
+
+
+/* Small devices (portrait tablets and large phones, 600px and up) */
+@media only screen and (min-width: 600px) {...}
+
+/* Medium devices (landscape tablets, 768px and up) */
+@media only screen and (min-width: 768px) {...}
+
+/* Large devices (laptops/desktops, 992px and up) */
+@media only screen and (min-width: 992px) {...}
+
+/* Extra large devices (large laptops and desktops, 1200px and up) */
+@media only screen and (min-width: 1200px) {...}

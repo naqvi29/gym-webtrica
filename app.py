@@ -967,6 +967,21 @@ def add_promo():
         return jsonify({"success":False, "error": str(e)})
 
 
+@app.route("/chat", methods=["GET", "POST"])
+def adminchat():
+    chatTable = chatTable = db.chating
+    # if admin wants to access inbox                    
+    data = chatTable.find({"adminid": ObjectId("6176c191651f5e10e09e398f")})
+    newdata = []
+    for chats in data:
+        if "trainerid" in chats:
+            chats.update({"_id": str(chats["_id"]), "adminid": str(chats["adminid"]), "trainerid": str(chats["trainerid"])})
+        elif "customerid" in chats:
+            chats.update({"_id": str(chats["_id"]), "adminid": str(chats["adminid"]), "customerid": str(chats["customerid"])})    
+        newdata.append(chats)
+    return render_template("chat.html",data=newdata)
+    
+
 
 ########################################################################################## MOBILE API'S START ######################################################################################################
  
@@ -3044,10 +3059,31 @@ def generate_qrcode():
     # then save filename to gym collection in database 
     return True
 
-# ************************************* CHATING START ***********************************************
+# ************ AFTER SCANNING QR CODE API ************
+@app.route("qrcode-data-api", methods=["POST", "GET"])
+def qrcode_data_api():
+    try:
+        if request.method == "POST":
+            if request.is_json:
+                data = request.get_json()
+                gym_id = data['gym_id']
+                usertype = data['user_type'] #trainer or customer
+                user_id = data['user_id']
+                time = data['time']
+                
+                #ab booking se sara data nikal kar session mai dalna hai or session start karna hai then apne time py session end bhi hona chaheye.
+            else:
+                return jsonify({"success":False,"error":"Invalid json format"})
+        
+        else:
+            return jsonify({"success":False,"error":"Invalid request"})
+    except Exception as e:
+        return jsonify({"status":str(e)})
+
+# ************************************* CHATING START *********************************************** 
 # note kisi ko msg karna hai tu jis ko karna hai uski id,apni id or apni type deni hai.
 # agar sirf apna inbox kholna hai tu apni id or type deni hai sirf.
-@app.route("/chat-api", methods=["GET", "POST"])
+@app.route("/chat-api", methods=["GET", "POST"]) #TESTED 100% works
 def chatapi():
     try:
         if request.method == "POST":
@@ -3063,6 +3099,9 @@ def chatapi():
             userTable = db.customers
             trainerTable = db.trainers
             trainerid = "NULL"
+            adminid = "NULL"
+            if request.args.get("adminid"):
+                adminid = request.args.get("adminid")
             if request.args.get("trainerid"):
                 trainerid = request.args.get('trainerid')
             if request.args.get("userType"):
@@ -3071,9 +3110,10 @@ def chatapi():
             if trainerid != "NULL" and userType == "customer":
                 chatdata = chatTable.find_one({"customerid" :ObjectId(customerid), "trainerid": ObjectId(trainerid)})
                 trainerdata = trainerTable.find_one({"_id": ObjectId(trainerid)})
+                customerdata = userTable.find_one({"_id": ObjectId(customerid)})
                 if chatdata == None:
                     roomname = id_generator()
-                    chatTable.insert_one({"customerid": ObjectId(customerid), "customerName": username, "trainerid":
+                    chatTable.insert_one({"customerid": ObjectId(customerid), "customerName": customerdata["first_name"], "trainerid":
                         ObjectId(trainerid), "user2name": trainerdata["first_name"], "lastmessagecount": 0,
                                             "roomname": roomname,"accepted": False,
                                             "lastmessagetime": datetime.now(), "messages": []})
@@ -3088,20 +3128,82 @@ def chatapi():
                         ObjectId(trainerid), "user2name": trainerdata["first_name"], "lastmessagecount": 0,
                                         "roomname": roomname,"accepted": True,
                                         "lastmessagetime": datetime.now(), "messages": []})
+            # if admin wants to start a chat with customer/trainer
+            elif userType == "admin":
+                if customerid != "NULL":
+                    chatdata = chatTable.find_one({"customerid": ObjectId(customerid),"adminid":ObjectId(adminid)})
+                    customerdata = userTable.find_one({"_id": ObjectId(customerid)})
+                    if chatdata == None:
+                        roomname = id_generator()
+                        chatTable.insert_one({"customerid": ObjectId(customerid), "customerName": customerdata["first_name"], "adminid":
+                            ObjectId(adminid), "user2name": "admin", "lastmessagecount": 0,
+                                            "roomname": roomname,"accepted": True,
+                                            "lastmessagetime": datetime.now(), "messages": []})
+                elif trainerid != "NULL":
+                    chatdata = chatTable.find_one({"adminid": ObjectId(adminid),"trainerid":ObjectId(trainerid)})
+                    trainerdata = trainerTable.find_one({"_id": ObjectId(trainerid)})
+                    if chatdata == None:
+                        roomname = id_generator()
+                        chatTable.insert_one({"adminid": ObjectId(adminid), "customerName": "admin", "trainerid":
+                            ObjectId(trainerid), "user2name": trainerdata["first_name"], "lastmessagecount": 0,
+                                            "roomname": roomname,"accepted": True,
+                                            "lastmessagetime": datetime.now(), "messages": []})
+            # if customer/trainer wants to start a chat with admin
+            elif adminid != "NULL" and userType == "customer":
+                    chatdata = chatTable.find_one({"customerid": ObjectId(customerid),"adminid":ObjectId(adminid)})
+                    customerdata = userTable.find_one({"_id": ObjectId(customerid)})
+                    if chatdata == None:
+                        roomname = id_generator()
+                        chatTable.insert_one({"customerid": ObjectId(customerid), "customerName": customerdata["first_name"], "adminid":
+                            ObjectId(adminid), "user2name": "admin", "lastmessagecount": 0,
+                                            "roomname": roomname,"accepted": True,
+                                            "lastmessagetime": datetime.now(), "messages": []})
+            elif adminid != "NULL" and userType == "trainer":
+                chatdata = chatTable.find_one({"adminid": ObjectId(adminid),"trainerid":ObjectId(trainerid)})
+                trainerdata = trainerTable.find_one({"_id": ObjectId(trainerid)})
+                if chatdata == None:
+                    roomname = id_generator()
+                    chatTable.insert_one({"adminid": ObjectId(adminid), "customerName": "admin", "trainerid":
+                        ObjectId(trainerid), "user2name": trainerdata["first_name"], "lastmessagecount": 0,
+                                        "roomname": roomname,"accepted": True,
+                                        "lastmessagetime": datetime.now(), "messages": []})
 
-            
-
-            if userType == "trainer":
+            # if admin wants to access inbox 
+            if userType == "admin":                   
+                data = chatTable.find({"adminid": ObjectId("6176c191651f5e10e09e398f")})
+                newdata = []
+                for chats in data:
+                    if "trainerid" in chats:
+                        chats.update({"_id": str(chats["_id"]), "adminid": str(chats["adminid"]), "trainerid": str(chats["trainerid"])})
+                    elif "customerid" in chats:
+                        chats.update({"_id": str(chats["_id"]), "adminid": str(chats["adminid"]), "customerid": str(chats["customerid"])})    
+                    newdata.append(chats)
+                return jsonify({"data":newdata,
+                })
+            # if trainer wants to acceess inbox 
+            elif userType == "trainer":
                 data = chatTable.find({"trainerid": ObjectId(trainerid)})
+                newdata = []
+                for chats in data:
+                    if "adminid" in chats:
+                        chats.update({"_id": str(chats["_id"]), "adminid": str(chats["adminid"]), "trainerid": str(chats["trainerid"])})
+                    elif "customerid" in chats:
+                        chats.update({"_id": str(chats["_id"]), "customerid": str(chats["customerid"]), "trainerid": str(chats["trainerid"])})
+                    newdata.append(chats)
+                return jsonify({"data":newdata,
+                })
+            # if customer wants to access inbox
             elif userType == "customer":
                 data = chatTable.find({"customerid": ObjectId(customerid)})
-
-            newdata = []
-            for chats in data:
-                chats.update({"_id": str(chats["_id"]), "trainerid": str(chats["trainerid"]), "customerid": str(chats["customerid"])})
-                newdata.append(chats)
-            return jsonify({"data":newdata, "username":username, "userid":customerid, "trainerid":trainerid,
-            })
+                newdata = []
+                for chats in data:
+                    if "adminid" in chats:
+                        chats.update({"_id": str(chats["_id"]), "adminid": str(chats["adminid"]), "customerid": str(chats["customerid"])})
+                    elif "trainerid" in chats:
+                        chats.update({"_id": str(chats["_id"]), "customerid": str(chats["customerid"]), "trainerid": str(chats["trainerid"])})
+                    newdata.append(chats)
+                return jsonify({"data":newdata,
+                })
     except Exception as e:
         return jsonify({"status": str(e)})
 

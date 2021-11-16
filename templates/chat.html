@@ -1,0 +1,662 @@
+{% extends "layout.html" %}
+{% block head %}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Super-Admin | Chat</title>
+
+<!-- Google Font: Source Sans Pro -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="/static/AdminLTE-master/plugins/fontawesome-free/css/all.min.css">
+<!-- Ionicons -->
+<link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+<!-- Tempusdominus Bootstrap 4 -->
+<link rel="stylesheet"
+  href="/static/AdminLTE-master/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css">
+<!-- iCheck -->
+<link rel="stylesheet" href="/static/AdminLTE-master/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+<!-- JQVMap -->
+<link rel="stylesheet" href="/static/AdminLTE-master/plugins/jqvmap/jqvmap.min.css">
+<!-- Theme style -->
+<link rel="stylesheet" href="/static/AdminLTE-master/dist/css/adminlte.min.css">
+<!-- overlayScrollbars -->
+<link rel="stylesheet" href="/static/AdminLTE-master/plugins/overlayScrollbars/css/OverlayScrollbars.min.css">
+<!-- Daterange picker -->
+<link rel="stylesheet" href="/static/AdminLTE-master/plugins/daterangepicker/daterangepicker.css">
+<!-- summernote -->
+<link rel="stylesheet" href="/static/AdminLTE-master/plugins/summernote/summernote-bs4.min.css">
+
+<link rel="stylesheet" href='{{ url_for("static", filename="/AdminLTE-master/dist/css/chat.css") }}'/>
+<style>
+    .image-upload > input {
+        display: none;
+    }
+
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+
+        $("#hide").click(function () {
+            $(".showmessdiv").hide();
+        });
+        $("#show").click(function () {
+            $(".showmessdiv").show();
+            Q
+        });
+    });
+
+
+</script>
+
+{% endblock %}
+{% block content %}
+
+    <div class="container mt-5 mb-5 border ">
+        <div class="row">
+            <div class="chatlist" id="myDIV" style="display: block;">
+                <div class="chatlistdiv1">
+                    <p> INBOX</p>
+                </div>
+                {% for chats in data %}
+                    <div id="{{ chats['user_id'] }}" class="chatlistdiv2"
+                         onclick="generateMessageArea(this.id);myFunction();myFunctionchathide();dissconnected(this.id)">
+                        <img class="chatuserimg pt-1 pb-1 rounded-circle"
+                             src='{{ url_for("static", filename="/images/customers/profile-pics/yh.png" ) }}' alt="User chat">
+
+                        <span class="username pl-3">{{ chats["user2name"] }} </span>
+                        <input value="{{ chats['username'] }}" id="usernames_{{ chats['customerid'] }}"
+                               style="display:none;">
+                        <input value="{{ chats['roomname'] }}" id="roomnames_{{ chats['customerid'] }}"
+                               style="display:none;">
+                        <input value="{{ chats['customerid'] }}" id="userid_{{ chats['customerid'] }}" style="display:none;">
+
+                    </div>
+                {% endfor %}
+
+
+            </div>
+
+            <div id="panelchat">
+                Select a chat to view conversation
+            </div>
+            <div class="chatdiv showmessdiv" id="message-area">
+
+
+            </div>
+        </div>
+
+
+    </div>
+
+    </div>
+
+
+    <!--    modal-->
+    <div class="modal fade" id="myModal" role="dialog">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+
+                    <h4 class="modal-title">Preview</h4>
+                </div>
+                <div class="modal-body" id="perviews">
+
+                    <div class="preview-images-zone">
+
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-default" onclick="sendingimage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../static/chat/js/socket.io.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"
+            crossorigin="anonymous"></script>
+    <script>
+        var socket = io.connect('https://' + document.domain + ':' + location.port);
+
+        function myFunctionchathide() {
+            document.getElementById("panelchat").style.display = "none";
+            document.getElementById("message-area").style.display = "block";
+
+        }
+
+        function myFunction() {
+
+            var mydiv = document.getElementById("myDIV");
+            var x = window.matchMedia("(max-width: 600px)");
+            console.log(x)
+            if (x.matches) {
+                mydiv.style.display = "none"
+                mydiv.style.display = "block";
+            } else {
+                document.getElementById("myDIV").style.display = "block";
+            }
+        }
+
+
+        var roomnames = "";
+        var usernames = "";
+        var sellerid = "";
+        var curuserid = "{{userid}}";
+        connectedroomnames = [];
+
+        function dissconnected(userid) {
+            var userids = userid;
+            roomnames = document.getElementById("roomnames_" + userids).value;
+            socket.off('doctor response')
+            socket.off('my response')
+            socket.off('doctor picture')
+            socket.off('my picture')
+        }
+
+        function generateMessageArea(userid) {
+            var userids = userid;
+            usernames = "{{username}}";
+            sellername = document.getElementById("usernames_" + userids).value;
+            roomnames = document.getElementById("roomnames_" + userids).value;
+            sellerid = document.getElementById("userid_" + userids).value;
+            console.log(userid, roomnames, sellerid)
+            var messages = "";
+            $.ajax({
+
+                type: 'GET',
+                url: '/getmessages',
+                data: {id: curuserid, sellerid: sellerid},
+
+
+                success: function (data) {
+
+                    messages = data['messages'];
+
+                    console.log(messages);
+                    var messagesdata = "";
+                    for (var i = 0; i < messages.length; i++) {
+                        console.log(messages[i])
+                        var jsonmessage = messages[i];
+                        if (jsonmessage["status"] == "userlogin" && jsonmessage["type"] == "text") {
+                            messagesdata = messagesdata + `<div class="align-self-start p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
+            <div class="options">
+            </div>
+
+            <div class="d-flex flex-row">
+                <div class="body m-1 mr-2">` + jsonmessage["message"] + `</div>
+                <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
+                    ` + jsonmessage["time"] + `
+
+                </div>
+            </div>
+        </div>`
+                        } else if (jsonmessage["status"] == "admin" && jsonmessage["type"] == "text") {
+                            messagesdata = messagesdata + `<div class="align-self-end self p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
+    <div class="options">
+    </div>
+    <div class="d-flex flex-row">
+      <div class="body m-1 mr-2">` + jsonmessage["message"] + `</div>
+      <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
+      ` + jsonmessage["time"] + `
+      </div>
+    </div>
+  </div>`
+                        } else if (jsonmessage["status"] == "admin" && jsonmessage["type"] == "image") {
+                            messagesdata = messagesdata + `<div class="align-self-end self p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
+    <div class="options">
+    </div>
+    <div class="d-flex flex-row">
+      <div class="body m-1 mr-2"><img src=../static/productimages/` + jsonmessage["message"] + ` style="width:20vw"></div>
+      <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
+      ` + jsonmessage["time"] + `
+      </div>
+    </div>
+  </div>`
+
+
+                        } else if (jsonmessage["status"] == "userlogin" && jsonmessage["type"] == "image") {
+                            messagesdata = messagesdata + `<div class="align-self-start p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
+            <div class="options">
+            </div>
+
+            <div class="d-flex flex-row">
+                <div class="body m-1 mr-2"><img src=../static/productimages/` + jsonmessage["message"] + ` style="width:20vw"></div>
+                <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
+                    ` + jsonmessage["time"] + `
+
+                </div>
+            </div>
+        </div>`
+
+
+                        } else if (jsonmessage["status"] == "doctor" && jsonmessage["type"] == "file") {
+                            messagesdata = messagesdata + `<div class="align-self-end self p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
+    <div class="options">
+      <a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a>
+    </div>
+
+    <div class="d-flex flex-row">
+      <div class="body m-1 mr-2">` + jsonmessage["message"] + `<a href="/downloadfile/` + jsonmessage["message"] + `" style="padding-left:16px"><i class="fas fa-download" ></i></a></div>
+      <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
+        ` + jsonmessage["time"] + `
+        <i class="fas fa-check-circle"></i>
+      </div>
+    </div>
+  </div>`
+
+
+                        } else if (jsonmessage["status"] == "patient" && jsonmessage["type"] == "file") {
+                            messagesdata = messagesdata + `<div class="align-self-start p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
+        <div class="options">
+            <a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a>
+        </div>
+
+    <div class="small font-weight-bold text-primary">
+
+    </div>
+
+        <div class="d-flex flex-row">
+            <div class="body m-1 mr-2">` + jsonmessage["message"] + `<a href="/downloadfile/` + jsonmessage["message"] + `" style="padding-left:16px"><i class="fas fa-download" ></i></a></div>
+            <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
+               ` + jsonmessage["time"] + `
+
+            </div>
+        </div>
+    </div>`
+
+
+                        }
+                    }
+                    console.log(messagesdata);
+                    var htmls = `
+	<div class="chatlistdiv2">
+  	<i class="fa fa-arrow-left chatmobileicon"  id="hide" onclick="myFunction()"></i>
+<img class="chatuserimg pt-1 pb-1 rounded-circle"
+                             src='{{ url_for("static", filename="images/admin.jpg" ) }}' alt="User chat">
+<span class="username pl-3">` + sellername + `</span>
+  <form id="FileForm" name="file" enctype="multipart/form-data" style="position:absolute;">
+            <a class="image-upload" href="javascript:void(0)" onclick="$('#file-input').click()"><label for="file-input">
+                <i class="fa fa-camera pt-3  float-right pr-1"></i>
+            </label><input id="file-input" name="files" type="file" ></a>
+</form>
+
+                         </div>
+<div class="d-flex flex-column messages1" id="messages">
+            ` + messagesdata + `</div>
+
+
+            <div class="chatinput1">
+
+                <input type="text" id="inputmessage"  name="" class="chatinput2">
+                <button id="sendingmessage" type="submit" class="sendbtn"><i class="fa fa-paper-plane"></i></button>
+
+            </div>`
+
+
+                    $("#message-area").html(htmls);
+                    <!--      $("#navbarss").html(htmls);-->
+
+
+                    var a = document.getElementById('file-input').addEventListener('change', readImage, false);
+                    console.log(a)
+                    $(document).on('click', '.image-cancel', function () {
+                        let no = $(this).data('no');
+                        $(".preview-image.preview-show-" + no).remove();
+                    });
+
+
+                    var objDiv = document.getElementById("messages");
+                    objDiv.scrollTop = objDiv.scrollHeight;
+
+
+                    console.log(usernames, roomnames);
+                    console.log(connectedroomnames, connectedroomnames.includes(roomnames))
+                    if (connectedroomnames.includes(roomnames) == false) {
+                        socket = io.connect('https://' + document.domain + ':' + location.port);
+                        socket.on('connect', function () {
+                            let user_name = usernames;
+
+                            let roomName = roomnames;
+
+                            console.log("asdasd");
+                            socket.emit('my event', {
+                                data: 'User Connected',
+                                user_name: user_name,
+                                message: "connected",
+                                roomname: roomName
+                            })
+                        });
+                        connectedroomnames.push(roomnames);
+                    }
+
+
+                    var form = $('#sendingmessage, #inputmessage').on('keyup click', function (e) {
+                        e.preventDefault()
+                        if ((e["type"] == "click" && e["target"].id == "sendingmessage") || (e["type"] == "keydown" && e["target"].id == "inputmessage" && e.key === 'Enter' || e.keyCode === 13)) {
+                            let user_name = usernames;
+                            let user_input = $('#inputmessage').val()
+                            let roomName = roomnames;
+                            socket.emit('my event', {
+                                user_name: user_name,
+                                message: user_input,
+                                roomname: roomName
+                            })
+                            $('#inputmessage').val('').focus()
+                        }
+                    })
+
+                    socket.on('doctor response', function (msg) {
+                        console.log(msg)
+                        var d = new Date();
+                        if (typeof msg.user_name !== 'undefined') {
+                            $('#messages').append(`<div class="align-self-end self p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
+    <div class="options">
+    </div>
+    <div class="d-flex flex-row">
+      <div class="body m-1 mr-2">` + msg["message"] + `</div>
+      <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
+        ` + d.getHours() + ":" + d.getMinutes() + `
+      </div>
+    </div>
+  </div>`);
+
+                            var objDiv = document.getElementById("messages");
+                            objDiv.scrollTop = objDiv.scrollHeight;
+                        }
+                    })
+                    socket.on('my response', function (msg) {
+                        console.log(msg)
+                        var d = new Date();
+                        if (typeof msg.user_name !== 'undefined') {
+                            $('#messages').append(`<div class="align-self-start p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
+            <div class="options">
+            </div>
+
+            <div class="d-flex flex-row">
+                <div class="body m-1 mr-2">` + msg["message"] + `</div>
+                <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
+                    ` + d.getHours() + ":" + d.getMinutes() + `
+
+                </div>
+            </div>
+        </div> `);
+                            var objDiv = document.getElementById("messages");
+                            objDiv.scrollTop = objDiv.scrollHeight;
+
+
+                        }
+                    })
+
+
+                    socket.on('doctor picture', function (msg) {
+
+
+                        console.log(msg)
+                        var d = new Date();
+                        if (typeof msg.user_name !== 'undefined') {
+
+                            $('#messages').append(`<div class="align-self-end self p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
+    <div class="options">
+    </div>
+    <div class="d-flex flex-row">
+      <div class="body m-1 mr-2"><img src=../static/productimages/` + msg["message"] + ` style="width:20vw"></div>
+      <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
+      ` + d.getHours() + ":" + d.getMinutes() + `
+      </div>
+    </div>
+  </div>`)
+
+                            var objDiv = document.getElementById("messages");
+                            objDiv.scrollTop = objDiv.scrollHeight;
+
+
+                        }
+
+                    })
+
+
+                    socket.on('my picture', function (msg) {
+                        console.log(msg)
+                        var d = new Date();
+                        if (typeof msg.user_name !== 'undefined') {
+
+                            $('#messages').append(`<div class="align-self-start p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
+            <div class="options">
+            </div>
+
+            <div class="d-flex flex-row">
+                <div class="body m-1 mr-2"><img src=../static/productimages/` + msg["message"] + ` style="width:20vw"></div>
+                <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
+                    ` + d.getHours() + ":" + d.getMinutes() + `
+
+                </div>
+            </div>
+        </div>`);
+
+                            var objDiv = document.getElementById("messages");
+                            objDiv.scrollTop = objDiv.scrollHeight;
+                        }
+
+                    })
+
+                    socket.on('my file', function (msg) {
+                        console.log(msg)
+                        var d = new Date();
+                        if (typeof msg.user_name !== 'undefined') {
+                            <!--          $( 'h3' ).remove()-->
+
+
+                            $('#messages').append(`<div class="align-self-start p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
+        <div class="options">
+            <a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a>
+        </div>
+
+    <div class="small font-weight-bold text-primary">
+
+    </div>
+
+        <div class="d-flex flex-row">
+            <div class="body m-1 mr-2">` + msg["message"] + `<a href="/downloadfile/` + msg["message"] + `" style="padding-left:16px"><i class="fas fa-download" ></i></a></div>
+            <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
+               ` + d.getHours() + ":" + d.getMinutes() + `
+
+            </div>
+        </div>
+    </div>`);
+
+                        }
+                    })
+
+                    socket.on('doctor file', function (msg) {
+                        console.log(msg)
+                        var d = new Date();
+                        if (typeof msg.user_name !== 'undefined') {
+                            <!--          $( 'h3' ).remove()-->
+
+                            $('#messages').append(`<div class="align-self-end self p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
+    <div class="options">
+      <a href="#"><i class="fas fa-angle-down text-muted px-2"></i></a>
+    </div>
+
+    <div class="d-flex flex-row">
+      <div class="body m-1 mr-2">` + msg["message"] + `<a href="/downloadfile/` + msg["message"] + `" style="padding-left:16px"><i class="fas fa-download" ></i></a></div>
+      <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:5vw;">
+        ` + d.getHours() + ":" + d.getMinutes() + `
+        <i class="fas fa-check-circle"></i>
+      </div>
+    </div>
+  </div>`)
+
+
+                        }
+                    })
+
+                }
+            })
+
+
+        }
+
+
+        var num = 4;
+
+        function readImage() {
+            if (window.File && window.FileList && window.FileReader) {
+                var files = event.target.files; //FileList object
+                console.log(files);
+                var output = $(".preview-images-zone");
+
+                for (let i = 0; i < files.length; i++) {
+                    var file = files[i];
+                    if (!file.type.match('image')) continue;
+
+                    var picReader = new FileReader();
+
+                    picReader.addEventListener('load', function (event) {
+                        var picFile = event.target;
+                        var html = '<div class="preview-image preview-show-' + num + '">' +
+
+                            '<div class="image-zone"><img style="width: 25vw" id="pro-img-' + num + '" src="' + picFile.result + '"></div>' +
+                            '</div>';
+                        output.html("");
+                        output.append(html);
+                        num = num + 1;
+                    });
+
+                    picReader.readAsDataURL(file);
+                    $("#myModal").modal();
+                }
+                {#$("#pro-image").val('');#}
+            } else {
+                console.log('Browser not support');
+            }
+
+        }
+
+
+        function sendingprescrip() {
+
+
+            var prescrip = document.getElementById("prescrip").value;
+
+
+            let user_name = usernames;
+            let user_input = prescrip;
+            let roomName = roomnames;
+            socket.emit('my priscripevent', {
+                user_name: user_name,
+                message: user_input,
+                roomname: roomName
+            })
+
+            $("#prescripModal").modal("hide");
+
+        }
+
+
+        function sendingimage() {
+
+
+            var formDataRaw = $('#FileForm')[4];
+            var form_data = new FormData();
+            var file = $("#file-input")[0].files[0];
+            form_data.append('file', file)
+            console.log(file);
+            console.log("hellos")
+            var id = 1;
+            $.ajax({
+
+                type: 'POST',
+                url: '/uploadimage',
+                data: form_data,
+                contentType: false,
+                processData: false,
+                enctype: 'multipart/form-data',
+                success: function (data) {
+                    console.log(data);
+                    var filename = data["filename"]
+                    $("#myModal").modal("hide");
+
+
+                    let user_name = "{{username}}";
+                    let user_input = filename;
+                    let roomName = roomnames;
+                    socket.emit('my imageevent', {
+                        user_name: user_name,
+                        message: user_input,
+                        roomname: roomName
+                    })
+
+
+                },
+            });
+
+        }
+
+
+
+
+
+        {%if sellerid != "None"%}
+            console.log("{{sellerid}}")
+            generateMessageArea("{{sellerid}}");
+            myFunctionchathide();
+        {%endif%}
+
+
+    </script>
+
+
+{% endblock %}
+{% block bodyscripts %}
+<!-- jQuery -->
+<script src="/static/AdminLTE-master/plugins/jquery/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="/static/AdminLTE-master/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- DataTables  & Plugins -->
+<script src="/static/AdminLTE-master/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/static/AdminLTE-master/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/static/AdminLTE-master/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/static/AdminLTE-master/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/static/AdminLTE-master/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/static/AdminLTE-master/plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
+
+<script src="/static/AdminLTE-master/plugins/jszip/jszip.min.js"></script>
+<script src="/static/AdminLTE-master/plugins/pdfmake/pdfmake.min.js"></script>
+<script src="/static/AdminLTE-master/plugins/pdfmake/vfs_fonts.js"></script>
+<script src="/static/AdminLTE-master/plugins/datatables-buttons/js/buttons.html5.min.js"></script>
+<script src="/static/AdminLTE-master/plugins/datatables-buttons/js/buttons.print.min.js"></script>
+<script src="/static/AdminLTE-master/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
+<!-- AdminLTE App -->
+<script src="/static/AdminLTE-master/dist/js/adminlte.min.js"></script>
+<!-- AdminLTE for demo purposes -->
+<script src="/static/AdminLTE-master/dist/js/demo.js"></script>
+<!-- Page specific script -->
+<script>
+  $(function () {
+    $("#example1").DataTable({
+      "responsive": true, "lengthChange": false, "autoWidth": false, "scrollX": true,
+      "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+    }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+    $('#example2').DataTable({
+      "paging": true,
+      "lengthChange": false,
+      "searching": false,
+      "ordering": true,
+      "info": true,
+      "autoWidth": false,
+      "responsive": true,
+    });
+  });
+//   $(document).ready(function() {
+//     $('#example1').DataTable( {
+//         "scrollX": true, 
+//     } );
+// } );
+
+</script>
+{% endblock %}
