@@ -52,26 +52,49 @@
 {% endblock %}
 {% block content %}
 
-    <div class="container mt-5 mb-5 border ">
+    <div class="container-fluid mt-5 mb-5 border ">
         <div class="row">
             <div class="chatlist" id="myDIV" style="display: block;">
                 <div class="chatlistdiv1">
                     <p> INBOX</p>
                 </div>
                 {% for chats in data %}
-                    <div id="{{ chats['user_id'] }}" class="chatlistdiv2"
+                {% if chats["customerName"] %}
+
+                    <div id="{{ chats['admin_id'] }}" class="chatlistdiv2"
                          onclick="generateMessageArea(this.id);myFunction();myFunctionchathide();dissconnected(this.id)">
                         <img class="chatuserimg pt-1 pb-1 rounded-circle"
                              src='{{ url_for("static", filename="/images/customers/profile-pics/yh.png" ) }}' alt="User chat">
 
-                        <span class="username pl-3">{{ chats["user2name"] }} </span>
-                        <input value="{{ chats['username'] }}" id="usernames_{{ chats['customerid'] }}"
+                        <span class="username pl-3">{{ chats["customerName"] }} </span>
+                        <span style="color: deepskyblue;
+                        font-style: italic;" class="username pl-3">Customer</span>
+                        <input value="{{ chats['customername'] }}" id="usernames_{{ chats['customerid'] }}"
                                style="display:none;">
                         <input value="{{ chats['roomname'] }}" id="roomnames_{{ chats['customerid'] }}"
                                style="display:none;">
                         <input value="{{ chats['customerid'] }}" id="userid_{{ chats['customerid'] }}" style="display:none;">
 
                     </div>
+                {% endif %}
+                {% if chats["trainername"] %}
+
+                    <div id="{{ chats['admin_id'] }}" class="chatlistdiv2"
+                         onclick="generateMessageArea(this.id);myFunction();myFunctionchathide();dissconnected(this.id)">
+                        <img class="chatuserimg pt-1 pb-1 rounded-circle"
+                             src='{{ url_for("static", filename="/images/customers/profile-pics/yh.png" ) }}' alt="User chat">
+
+                        <span class="username pl-3">{{ chats["trainername"] }} </span>
+                        <span style="color: deepskyblue;
+                        font-style: italic;" class="username pl-3">Trainer</span>
+                        <input value="{{ chats['customername'] }}" id="usernames_{{ chats['customerid'] }}"
+                               style="display:none;">
+                        <input value="{{ chats['roomname'] }}" id="roomnames_{{ chats['customerid'] }}"
+                               style="display:none;">
+                        <input value="{{ chats['customerid'] }}" id="userid_{{ chats['customerid'] }}" style="display:none;">
+
+                    </div>
+                {% endif %}
                 {% endfor %}
 
 

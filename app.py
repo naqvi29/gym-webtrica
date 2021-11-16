@@ -969,7 +969,7 @@ def add_promo():
 
 @app.route("/chat", methods=["GET", "POST"])
 def adminchat():
-    chatTable = chatTable = db.chating
+    chatTable = db.chating
     # if admin wants to access inbox                    
     data = chatTable.find({"adminid": ObjectId("6176c191651f5e10e09e398f")})
     newdata = []
@@ -3092,20 +3092,23 @@ def chatapi():
             username = ""
             if request.args.get("username"):
                 username = request.args.get("username")
-            customerid = "NULL"
-            if request.args.get("customerid"):
-                customerid = request.args.get("customerid")
-            chatTable = db.chating
-            userTable = db.customers
-            trainerTable = db.trainers
+            customerid = "NULL"            
             trainerid = "NULL"
             adminid = "NULL"
+            if request.args.get("customerid"):
+                customerid = request.args.get("customerid")
             if request.args.get("adminid"):
                 adminid = request.args.get("adminid")
             if request.args.get("trainerid"):
                 trainerid = request.args.get('trainerid')
             if request.args.get("userType"):
                 userType = request.args.get("userType")
+            # configure tables 
+            chatTable = db.chating
+            userTable = db.customers
+            trainerTable = db.trainers
+            adminTable = db.admin
+
             # if customers wants to start a chat with trainer
             if trainerid != "NULL" and userType == "customer":
                 chatdata = chatTable.find_one({"customerid" :ObjectId(customerid), "trainerid": ObjectId(trainerid)})
@@ -3114,7 +3117,7 @@ def chatapi():
                 if chatdata == None:
                     roomname = id_generator()
                     chatTable.insert_one({"customerid": ObjectId(customerid), "customerName": customerdata["first_name"], "trainerid":
-                        ObjectId(trainerid), "user2name": trainerdata["first_name"], "lastmessagecount": 0,
+                        ObjectId(trainerid), "trainername": trainerdata["first_name"], "lastmessagecount": 0,
                                             "roomname": roomname,"accepted": False,
                                             "lastmessagetime": datetime.now(), "messages": []})
             # if trainer wants to start a chat with customer 
@@ -3125,52 +3128,56 @@ def chatapi():
                 if chatdata == None:
                     roomname = id_generator()
                     chatTable.insert_one({"customerid": ObjectId(customerid), "customerName": customerdata["first_name"], "trainerid":
-                        ObjectId(trainerid), "user2name": trainerdata["first_name"], "lastmessagecount": 0,
-                                        "roomname": roomname,"accepted": True,
+                        ObjectId(trainerid), "trainername": trainerdata["first_name"], "lastmessagecount": 0,
+                                        "roomname": roomname,"accepted": False,
                                         "lastmessagetime": datetime.now(), "messages": []})
             # if admin wants to start a chat with customer/trainer
             elif userType == "admin":
                 if customerid != "NULL":
                     chatdata = chatTable.find_one({"customerid": ObjectId(customerid),"adminid":ObjectId(adminid)})
                     customerdata = userTable.find_one({"_id": ObjectId(customerid)})
+                    admindata = adminTable.find_one({"_id": ObjectId(adminid)})
                     if chatdata == None:
                         roomname = id_generator()
                         chatTable.insert_one({"customerid": ObjectId(customerid), "customerName": customerdata["first_name"], "adminid":
-                            ObjectId(adminid), "user2name": "admin", "lastmessagecount": 0,
-                                            "roomname": roomname,"accepted": True,
+                            ObjectId(adminid), "adminname": admindata["username"], "lastmessagecount": 0,
+                                            "roomname": roomname,"accepted": False,
                                             "lastmessagetime": datetime.now(), "messages": []})
                 elif trainerid != "NULL":
                     chatdata = chatTable.find_one({"adminid": ObjectId(adminid),"trainerid":ObjectId(trainerid)})
                     trainerdata = trainerTable.find_one({"_id": ObjectId(trainerid)})
+                    admindata = adminTable.find_one({"_id": ObjectId(adminid)})
                     if chatdata == None:
                         roomname = id_generator()
-                        chatTable.insert_one({"adminid": ObjectId(adminid), "customerName": "admin", "trainerid":
-                            ObjectId(trainerid), "user2name": trainerdata["first_name"], "lastmessagecount": 0,
+                        chatTable.insert_one({"adminid": ObjectId(adminid), "adminname": admindata["username"], "trainerid":
+                            ObjectId(trainerid), "trainername": trainerdata["first_name"], "lastmessagecount": 0,
                                             "roomname": roomname,"accepted": True,
                                             "lastmessagetime": datetime.now(), "messages": []})
             # if customer/trainer wants to start a chat with admin
             elif adminid != "NULL" and userType == "customer":
                     chatdata = chatTable.find_one({"customerid": ObjectId(customerid),"adminid":ObjectId(adminid)})
                     customerdata = userTable.find_one({"_id": ObjectId(customerid)})
+                    admindata = adminTable.find_one({"_id": ObjectId(adminid)})
                     if chatdata == None:
                         roomname = id_generator()
                         chatTable.insert_one({"customerid": ObjectId(customerid), "customerName": customerdata["first_name"], "adminid":
-                            ObjectId(adminid), "user2name": "admin", "lastmessagecount": 0,
-                                            "roomname": roomname,"accepted": True,
+                            ObjectId(adminid), "adminname": admindata["username"], "lastmessagecount": 0,
+                                            "roomname": roomname,"accepted": False,
                                             "lastmessagetime": datetime.now(), "messages": []})
             elif adminid != "NULL" and userType == "trainer":
                 chatdata = chatTable.find_one({"adminid": ObjectId(adminid),"trainerid":ObjectId(trainerid)})
                 trainerdata = trainerTable.find_one({"_id": ObjectId(trainerid)})
+                admindata = adminTable.find_one({"_id": ObjectId(adminid)})
                 if chatdata == None:
                     roomname = id_generator()
-                    chatTable.insert_one({"adminid": ObjectId(adminid), "customerName": "admin", "trainerid":
-                        ObjectId(trainerid), "user2name": trainerdata["first_name"], "lastmessagecount": 0,
-                                        "roomname": roomname,"accepted": True,
+                    chatTable.insert_one({"adminid": ObjectId(adminid), "adminname": admindata["username"], "trainerid":
+                        ObjectId(trainerid), "trainername": trainerdata["first_name"], "lastmessagecount": 0,
+                                        "roomname": roomname,"accepted": False,
                                         "lastmessagetime": datetime.now(), "messages": []})
 
             # if admin wants to access inbox 
             if userType == "admin":                   
-                data = chatTable.find({"adminid": ObjectId("6176c191651f5e10e09e398f")})
+                data = chatTable.find({"adminid": ObjectId(adminid)})
                 newdata = []
                 for chats in data:
                     if "trainerid" in chats:
