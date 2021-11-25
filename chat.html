@@ -183,7 +183,6 @@
         }
 
         function generateMessageArea(userid) {
-            // here userid == trainer or customer id 
             var userids = userid;
             usernames = "admin";
             sellername = document.getElementById("usernames_" + userids).value;
@@ -232,29 +231,31 @@
       </div>
     </div>
   </div>`
-                            } else if (jsonmessage["status"] == "admin" && jsonmessage["type"] == "image") {
+} else if (jsonmessage["status"] == "customer" || jsonmessage["status"] == "trainer" && jsonmessage["type"] == "image") {
                             messagesdata = messagesdata + `<div class="align-self-end self p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
     <div class="options">
     </div>
     <div class="d-flex flex-row">
-        <div class="body m-1 mr-2"><a target="blank" href="/static/images/chats/` + jsonmessage["message"] + `"><img src=../static/images/chats/` + jsonmessage["message"] + ` style="width:15vw"></a></div>
-        <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
-      ` + jsonmessage["time"] + `</div>
+      <div class="body m-1 mr-2"><img src=../static/images/chats/` + jsonmessage["message"] + ` style="width:20vw"></div>
+      <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
+      ` + jsonmessage["time"] + `
+      </div>
     </div>
   </div>`
 
 
                         
-                        
-                        } else if (jsonmessage["status"] == "customer" || jsonmessage["status"] == "trainer" && jsonmessage["type"] == "image") {
+                        } else if (jsonmessage["status"] == "admin" && jsonmessage["type"] == "image") {
                             messagesdata = messagesdata + `<div class="align-self-start p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
             <div class="options">
             </div>
 
             <div class="d-flex flex-row">
-                <div class="body m-1 mr-2"><a target="blank" href="/static/images/chats/` + jsonmessage["message"] + `"><img src=../static/images/chats/` + jsonmessage["message"] + ` style="width:15vw"></a></div>
+                <div class="body m-1 mr-2"><img src=../static/images/chats/` + jsonmessage["message"] + ` style="width:20vw"></div>
                 <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
-                    ` + jsonmessage["time"] + `</div>
+                    ` + jsonmessage["time"] + `
+
+                </div>
             </div>
         </div>`
 
@@ -298,11 +299,12 @@
                         }
                     }
                     console.log(messagesdata);
+                    if (jsonmessage["status"] == "customer"){
                     var htmls = `
 	<div class="chatlistdiv2">
   	<i class="fa fa-arrow-left chatmobileicon"  id="hide" onclick="myFunction()"></i>
-<img class="chatuserimg pt-1 pb-1 rounded-circle"
-                             src='{{ url_for("static", filename="images/admin.png" ) }}' alt="User chat">
+<img class="chatuserimg pt-1 pb-1 rounded"
+                             src="static/images/customers/profile-pics/`+userpic+`") }}' alt="User chat">
 <span class="username pl-3">` + sellername + `</span>
   <form id="FileForm" name="file" enctype="multipart/form-data" style="position:absolute;">
             <a class="image-upload" href="javascript:void(0)" onclick="$('#file-input').click()"><label for="file-input">
@@ -320,7 +322,31 @@
                 <input type="text" id="inputmessage"  name="" class="chatinput2">
                 <button id="sendingmessage" type="submit" class="sendbtn"><i class="fa fa-paper-plane"></i></button>
 
-            </div>`
+            </div>`}
+                    else if (jsonmessage["status"] == "trainer"){
+                    var htmls = `
+	<div class="chatlistdiv2">
+  	<i class="fa fa-arrow-left chatmobileicon"  id="hide" onclick="myFunction()"></i>
+<img class="chatuserimg pt-1 pb-1 rounded"
+                             src="static/images/trainers/trainer-profile-pics/`+userpic+`"") }}' alt="User chat">
+<span class="username pl-3">` + sellername + `</span>
+  <form id="FileForm" name="file" enctype="multipart/form-data" style="position:absolute;">
+            <a class="image-upload" href="javascript:void(0)" onclick="$('#file-input').click()"><label for="file-input">
+                <i class="fa fa-camera pt-3  float-right pr-1"></i>
+            </label><input id="file-input" name="files" type="file" ></a>
+</form>
+
+                         </div>
+<div class="d-flex flex-column messages1" id="messages">
+            ` + messagesdata + `</div>
+
+
+            <div class="chatinput1">
+
+                <input type="text" id="inputmessage"  name="" class="chatinput2">
+                <button id="sendingmessage" type="submit" class="sendbtn"><i class="fa fa-paper-plane"></i></button>
+
+            </div>`}
 
 
                     $("#message-area").html(htmls);
@@ -431,7 +457,7 @@
     <div class="options">
     </div>
     <div class="d-flex flex-row">
-      <div class="body m-1 mr-2"><a target="blank" href="/static/images/chats/` + msg["message"] + `"><img src=../static/images/chats/` + msg["message"] + ` style="width:15vw"></a></div>
+      <div class="body m-1 mr-2"><img src=../static/images/chats/` + msg["message"] + ` style="width:20vw"></div>
       <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
       ` + d.getHours() + ":" + d.getMinutes() + `
       </div>
@@ -452,21 +478,18 @@
                         var d = new Date();
                         if (typeof msg.user_name !== 'undefined') {
 
-                            $('#messages').append(`<div class="align-self-end p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
+                            $('#messages').append(`<div class="align-self-start p-1 my-1 mx-3 rounded bg-white shadow-sm message-item">
             <div class="options">
             </div>
 
             <div class="d-flex flex-row">
-                <div class="body m-1 mr-2"><a target="blank" href="/static/images/chats/` + msg["message"] + `"><img src=../static/images/chats/` + msg["message"] + ` style="width:15vw"></a></div>
-      
+                <div class="body m-1 mr-2"><img src=../static/images/chats/` + msg["message"] + ` style="width:20vw"></div>
                 <div class="time ml-auto small text-right flex-shrink-0 align-self-end text-muted" style="width:75px;">
                     ` + d.getHours() + ":" + d.getMinutes() + `
 
                 </div>
             </div>
         </div>`);
-
-
 
                             var objDiv = document.getElementById("messages");
                             objDiv.scrollTop = objDiv.scrollHeight;
@@ -616,12 +639,11 @@
                     let user_name = "{{username}}";
                     let user_input = filename;
                     let roomName = roomnames;
-                    let status = "admin"
                     socket.emit('my imageevent', {
                         user_name: user_name,
                         message: user_input,
                         roomname: roomName,
-                        user_id: status
+                        user_id: "customer"
                     })
 
 
@@ -693,4 +715,3 @@
 
 </script>
 {% endblock %}
-
