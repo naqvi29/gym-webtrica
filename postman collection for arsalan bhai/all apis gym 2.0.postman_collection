@@ -1,0 +1,1432 @@
+{
+	"info": {
+		"_postman_id": "523fbb63-98b9-481a-bd9a-62aa06a0d9aa",
+		"name": "gym 2.0 Copy",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Signin",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"email\": \"zamanatabbas@gmail.com\",\"password\": \"1234\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/signin-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"signin-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Customer Signup",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "email",
+							"value": "test@test.com",
+							"type": "text"
+						},
+						{
+							"key": "first_name",
+							"value": "hey",
+							"type": "text"
+						},
+						{
+							"key": "last_name",
+							"value": "heyhe",
+							"type": "text"
+						},
+						{
+							"key": "contact",
+							"value": "45665",
+							"type": "text"
+						},
+						{
+							"key": "profile_pic",
+							"type": "file",
+							"src": "/C:/Users/Webtrica/Desktop/Faizan/Images/yh.png"
+						},
+						{
+							"key": "password",
+							"value": "1234",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/signup-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"signup-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Company Signup",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "organizational_number",
+							"value": "4564654",
+							"type": "text"
+						},
+						{
+							"key": "company_name",
+							"value": "Ali co",
+							"type": "text"
+						},
+						{
+							"key": "contact_person",
+							"value": "Ali",
+							"type": "text"
+						},
+						{
+							"key": "region",
+							"value": "USA",
+							"type": "text"
+						},
+						{
+							"key": "email",
+							"value": "ali@test.com",
+							"type": "text"
+						},
+						{
+							"key": "company_profile_pic",
+							"type": "file",
+							"src": "/C:/Users/Webtrica/Desktop/Faizan/Images/yh.png"
+						},
+						{
+							"key": "contact",
+							"value": "2626512651",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "1234",
+							"type": "text"
+						},
+						{
+							"key": "confirm_password",
+							"value": "1234",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/companysignup-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"companysignup-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Trainer Signup",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "first_name",
+							"value": "Khan",
+							"type": "text"
+						},
+						{
+							"key": "last_name",
+							"value": "Trainer",
+							"type": "text"
+						},
+						{
+							"key": "region",
+							"value": "Pakistan",
+							"type": "text"
+						},
+						{
+							"key": "email",
+							"value": "khan2@test.com",
+							"type": "text"
+						},
+						{
+							"key": "contact",
+							"value": "0213232626226",
+							"type": "text"
+						},
+						{
+							"key": "certificate",
+							"type": "file",
+							"src": [
+								"/D:/Zamanat Abbas/tmp/c1 (1).jpg",
+								"/D:/Zamanat Abbas/tmp/c1 (2).jpg",
+								"/D:/Zamanat Abbas/tmp/c1 (3).jpg",
+								"/D:/Zamanat Abbas/tmp/c1 (4).jpg"
+							]
+						},
+						{
+							"key": "password",
+							"value": "1234",
+							"type": "text"
+						},
+						{
+							"key": "confirm_password",
+							"value": "1234",
+							"type": "text"
+						},
+						{
+							"key": "trainer_profile_pic",
+							"type": "file",
+							"src": "/D:/pycharmProjects/doctor/static/images/webrtc-icon-192x192.png"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/trainersignup-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"trainersignup-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update customer profile",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "first_name",
+							"value": "Zamanat",
+							"type": "text"
+						},
+						{
+							"key": "last_name",
+							"value": "Abbas",
+							"type": "text"
+						},
+						{
+							"key": "email",
+							"value": "zamanatabbas@gmail.com",
+							"type": "text"
+						},
+						{
+							"key": "contact",
+							"value": "0323",
+							"type": "text"
+						},
+						{
+							"key": "profile_pic",
+							"type": "file",
+							"src": "c1 (1).jpg"
+						},
+						{
+							"key": "password",
+							"value": "1234",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/update-customer-profile-api/615c2a44831f4d1cacceac9a",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"update-customer-profile-api",
+						"615c2a44831f4d1cacceac9a"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "All trainers details",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/all-trainers-details-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"all-trainers-details-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "All customers details",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/all-customers-details-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"all-customers-details-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update trainer profile",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "first_name",
+							"value": "Test",
+							"type": "text"
+						},
+						{
+							"key": "last_name",
+							"value": "Trainer",
+							"type": "text"
+						},
+						{
+							"key": "email",
+							"value": "test@test.com",
+							"type": "text"
+						},
+						{
+							"key": "contact",
+							"value": "021651652",
+							"type": "text"
+						},
+						{
+							"key": "profile_pic",
+							"type": "file",
+							"src": "/C:/Users/Webtrica/Desktop/Temp/back.jpg"
+						},
+						{
+							"key": "password",
+							"value": "1234",
+							"type": "text"
+						},
+						{
+							"key": "bio",
+							"value": "bio lorem2",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/update-trainer-profile-api/616170117dec029cf7ffd969",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"update-trainer-profile-api",
+						"616170117dec029cf7ffd969"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "trainer-package-api",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/trainer-package-api/615c2d53831f4d1cacceac9e",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"trainer-package-api",
+						"615c2d53831f4d1cacceac9e"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Trainer bookings",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/trainer-bookings-api/615c2d8d831f4d1cacceac9f",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"trainer-bookings-api",
+						"615c2d8d831f4d1cacceac9f"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "customer bookings",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/customer-bookings-api/615c2a44831f4d1cacceac9a",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"customer-bookings-api",
+						"615c2a44831f4d1cacceac9a"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "all gym data",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/all-gym-details-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"all-gym-details-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update-customer-stats",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"today\": \"70\", \"goals\": \"80\", \"notes\": \" ipsum dolor sit amet consectetur adipisic.\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/update-customer-stats-api/615c2a44831f4d1cacceac9a",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"update-customer-stats-api",
+						"615c2a44831f4d1cacceac9a"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get trainer certificates",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/get-trainer-certificates-api/615c2d53831f4d1cacceac9e",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"get-trainer-certificates-api",
+						"615c2d53831f4d1cacceac9e"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add trainer certificate",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "certificate",
+							"type": "file",
+							"src": [
+								"c1 (3).jpg",
+								"c1 (4).jpg",
+								"certificate1.jpg",
+								"certificate2.jpeg"
+							]
+						}
+					]
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/add-new-trainer-certificate-api/615c2d53831f4d1cacceac9e",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"add-new-trainer-certificate-api",
+						"615c2d53831f4d1cacceac9e"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete trainer certificate",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": ""
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update -trainer-stats",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"today\": \"70\", \"goals\": \"80\", \"notes\": \" ipsum dolor sit amet consectetur adipisic.\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/update-trainer-stats-api/615c2d8d831f4d1cacceac9f",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"update-trainer-stats-api",
+						"615c2d8d831f4d1cacceac9f"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update trainer availability",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n     \"date\": \"2021-11-27\", \"start-time\": \"1:55 PM\", \"end-time\": \"5:55 PM\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/add-trainer-availability-api/617bca8181289538fc3a0690",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"add-trainer-availability-api",
+						"617bca8181289538fc3a0690"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update trainer packages",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "package_name",
+							"value": "1-training",
+							"type": "text"
+						},
+						{
+							"key": "price",
+							"value": "500",
+							"type": "text",
+							"disabled": true
+						}
+					]
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/update-trainer-packages-api/616aa02cb712e43250342af7",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"update-trainer-packages-api",
+						"616aa02cb712e43250342af7"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "trainer completed sessions",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/get-trainer-completed-sessions-api/615c2d53831f4d1cacceac9e",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"get-trainer-completed-sessions-api",
+						"615c2d53831f4d1cacceac9e"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "toggle trainer status api",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"status\": \"deactivated\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/toggle-trainer-status-api/615c2d53831f4d1cacceac9e",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"toggle-trainer-status-api",
+						"615c2d53831f4d1cacceac9e"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update trainer Rating api",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"rating\":\"5-star\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/trainer-rating-api/615c2d53831f4d1cacceac9e/",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"trainer-rating-api",
+						"615c2d53831f4d1cacceac9e",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add wallet card api",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "number",
+							"value": "456456456456",
+							"type": "text"
+						},
+						{
+							"key": "expirydate",
+							"value": "08/2030",
+							"type": "text"
+						},
+						{
+							"key": "cvv",
+							"value": "454",
+							"type": "text"
+						},
+						{
+							"key": "cardholder",
+							"value": "ALI",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/add-walletcard-customer-api/615c2a44831f4d1cacceac9a",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"add-walletcard-customer-api",
+						"615c2a44831f4d1cacceac9a"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update mud-scheme",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "mudscheme",
+							"type": "file",
+							"src": "sample.pdf"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/add-mudscheme-for-customer-api/615c2a44831f4d1cacceac9a",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"add-mudscheme-for-customer-api",
+						"615c2a44831f4d1cacceac9a"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "contact us for trainer",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "message",
+							"value": "Hello super admin this is Khan",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/contact-us-for-trainer-api/615c2d53831f4d1cacceac9e",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"contact-us-for-trainer-api",
+						"615c2d53831f4d1cacceac9e"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "contact us for customer",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "message",
+							"value": "Hello admin this is zamanat",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/contact-us-for-customer-api/615c2a44831f4d1cacceac9a",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"contact-us-for-customer-api",
+						"615c2a44831f4d1cacceac9a"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "validate promo",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "code",
+							"value": "EXAMPLE",
+							"type": "text"
+						},
+						{
+							"key": "price",
+							"value": "1000",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/validate-promocode-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"validate-promocode-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "forgot-password-api",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"email\":\"zamanatabbas@gmail.com\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/forgot-password-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"forgot-password-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update-password-api from mail code",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"user_id\":\"615c2a44831f4d1cacceac9a\",\r\n\"email\": \"zamanatabbas@gmail.com\",\r\n\"newpassword\": \"\",\r\n\"code\": \"\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/update-password-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"update-password-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "customer completed sessions",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/get-customer-completed-sessions-api/615c2a44831f4d1cacceac9a",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"get-customer-completed-sessions-api",
+						"615c2a44831f4d1cacceac9a"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update bookings",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"customer_id\":\"619df95677b7c4efb2a999b9\",\"trainer_id\":\"619df80377b7c4efb2a999af\",\"customer_name\":\"Groot postman\",\"trainer_name\":\"Groot postman\",\"customer_email\":\"groot@customer.com\",\"customer_profile_pic\":\"image_picker8230099024898400787.jpg\",\"package_type\":\"10-training\",\"booking_time\":\"4:00-10:00\",\"booking_date\":\"28\",\"booking_month\":\"Nov\",\"date\":\"28-11-2021\",\"location\":\"618e3613b884f734e832711d\",\"latitude\":\"\",\"longitude\":\"\",\"start_time\":\"4:00 PM\",\"end_time\":\"10:00 PM\" }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/update-bookings-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"update-bookings-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-company-api",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/get-company-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"get-company-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add-package-api",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/add-trainer-packages-api/616aa02cb712e43250342af7?price=1000&package_name=Zamanat",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"add-trainer-packages-api",
+						"616aa02cb712e43250342af7"
+					],
+					"query": [
+						{
+							"key": "price",
+							"value": "1000"
+						},
+						{
+							"key": "package_name",
+							"value": "Zamanat"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete package api",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/delete-trainer-packages-api/618a41c835378184d0231ea5",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"delete-trainer-packages-api",
+						"618a41c835378184d0231ea5"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update trainer links video",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "video",
+							"value": "https://www.youtube.com/watch?v=PY6DrbX4W4o",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/add-video-api/615c2d53831f4d1cacceac9e",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"add-video-api",
+						"615c2d53831f4d1cacceac9e"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "company-toggle-update-api for trainer packages screen",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/company-toggle-update-api/615c2d53831f4d1cacceac9e",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"company-toggle-update-api",
+						"615c2d53831f4d1cacceac9e"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "trainer booking waiting/declined",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/trainer-bookings-waiting-api/615c2d53831f4d1cacceac9e",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"trainer-bookings-waiting-api",
+						"615c2d53831f4d1cacceac9e"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "accept booking api for trainer",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/accept-booking-api/618ba3cbe61f8c10e9ce3207",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"accept-booking-api",
+						"618ba3cbe61f8c10e9ce3207"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "decline booking api for trainer",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/declined-booking-api/618ba3cbe61f8c10e9ce3207",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"declined-booking-api",
+						"618ba3cbe61f8c10e9ce3207"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "fetch-price-for-customer-bookings-api",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"trainer_id\":\"615c2d53831f4d1cacceac9e\",\"package_name\":\"1 - Training\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/fetch-price-for-customer-bookings-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"fetch-price-for-customer-bookings-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "payment-done-api",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"customerid\":\"619df95677b7c4efb2a999b9\",\"customername\":\"Groot\",\"email\":\"groot@customer.com\",\"package\":\"1 - Training\",\"amount\":\"500\",\"booking_id\":\"61a5ce00148f19411537f41b\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/payment-done-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"payment-done-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "select-gym-api",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"gym_ids\":[\"618e3613b884f734e832711d\",\"618e35bcb884f734e832711c\",\"616578a330bde537dc1f8cea\"],\"trainer_id\":\"615c2d53831f4d1cacceac9e\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/select-gym-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"select-gym-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "fetch-gyms-for-trainer-api/615c2d53831f4d1cacceac9e",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/fetch-gyms-for-trainer-api/615c2d53831f4d1cacceac9e",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"fetch-gyms-for-trainer-api",
+						"615c2d53831f4d1cacceac9e"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "qrcode-data-api",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"gym_id\":\"618e3613b884f734e832711d\",\"user_type\":\"trainer\",\"user_id\":\"619df80377b7c4efb2a999af\",\"time\":\"03:30 PM\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/qrcode-data-api",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"qrcode-data-api"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "good to know seen",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/good_to_know_seen-api/619df80377b7c4efb2a999af",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"good_to_know_seen-api",
+						"619df80377b7c4efb2a999af"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "session end api",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "https://gym.vidseries.com/session-end-api/619f64e02c759db10b324256",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"session-end-api",
+						"619f64e02c759db10b324256"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "fetch trainer availability for customers",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"trainer_id\":\"619df80377b7c4efb2a999af\",\"gym_id\":\"618e3613b884f734e832711d\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://gym.vidseries.com/fetch-trainer-available-dates-api2",
+					"protocol": "https",
+					"host": [
+						"gym",
+						"vidseries",
+						"com"
+					],
+					"path": [
+						"fetch-trainer-available-dates-api2"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

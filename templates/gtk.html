@@ -3,7 +3,7 @@
 {% block head %}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gyms</title>
+<title>Good To Know</title>
 
 <!-- Google Font: Source Sans Pro -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="/static/AdminLTE-master/dist/css/adminlte.min.css">
 {% endblock %}
 
-{% block header %}Gyms{% endblock %}
+{% block header %}Good To Know{% endblock %}
 
 {% block content %}
 
@@ -27,46 +27,28 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <div class="add">
-                <a href="/addnew/gym"><button class="btn-outline-success btn-sm">Add a new gym</button></a>
-            </div>
+
           </div>
           <!-- /.card-header -->
           <div class="card-body">
             <table id="example1" class="table table-bordered table-striped display" style="width:100%">
               <thead>
                 <tr>
-                  <th>Gym Name</th>
-                  <th>Heading</th>
-                  <th>Desc</th>
-                  <th>Peoples</th>
-                  <th>Profile Picture</th>
-                  <th>QR Code</th>
-                  <th>Edit</th>
-                  <th>Delete</th>
+                  <th>Customers</th>
+                  <th>Trainers</th>
                 </tr>
               </thead>
               <tbody>
-                {% for gyms in gyms %}
                 <tr>
-                  <td>{{ gyms.name }}</td>
-                  <td>{{ gyms.heading }}</td>
-                  <td>{{ gyms.desc }}</td>
-                  <td>{{ gyms.peoples }}</td>
-                  <td><a href="static/images/gyms/gym-profile-pic/{{gyms.profile_pic}}">{{gyms.profile_pic}}</a></td>
-                  <td><a href="static/images/gyms/QR-codes/{{gyms.QRcode}}">{{gyms.QRcode}}</a></td>
-                  <td><a href="/edit/gyms/{{ gyms._id }}"><button type="button"
-                        class="btn-outline-info btn-sm btn-block">Edit</button>
-                    </a>
-                  </td>
-                  <td>
-                    <a href="/delete/gyms/{{ gyms._id }}"><button onclick="return myFunction()" type="button"
-                        class="btn-outline-danger btn-sm btn-block">Delete</button>
-                    </a>
-                  </td>
+                  <td>{{ customer.text }}</td>
+                  <td>{{ trainer.text }}</td>
                 </tr>
-                {% endfor %}
-
+                <tr>                    
+                  <td><a href="/edit/gtk/customer"><button type="button"
+                    class="btn-outline-info btn-sm btn-block">edit</button></a></td>
+                  <td><a href="/edit/gtk/trainer"><button type="button"
+                    class="btn-outline-info btn-sm btn-block">edit</button></a></td>
+                </tr>
                 </tfoot>
             </table>
           </div>
@@ -129,14 +111,5 @@
 //     } );
 // } );
   
-</script>
-<script LANGUAGE="JavaScript">
-  function myFunction() {
-      var agree=confirm("Are you sure you want to proceed?");
-      if (agree)
-      return true ;
-      else
-      return false ;
-  }
 </script>
 {% endblock %}

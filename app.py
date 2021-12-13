@@ -1,3 +1,4 @@
+from collections import UserDict
 import re
 import os, sys
 from os.path import join, dirname, realpath
@@ -15,7 +16,7 @@ from werkzeug.security import generate_password_hash, check_password_hash, safe_
 from PIL import Image
 from flask_socketio import SocketIO, join_room, leave_room,emit
 import datetime
-from datetime import datetime
+from datetime import _IsoCalendarDate, datetime
 import random
 import string
 import stripe
@@ -79,10 +80,10 @@ app.secret_key = '_5#y2L"F4Q8z\n\xec]/'
 # Mail server config.
 
 app.config['MAIL_DEBUG'] = True
-app.config['MAIL_SERVER'] = 'smtp.ionos.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = 'testwebtrica@gmail.com'
 app.config['MAIL_PASSWORD'] = 'Lawrence1234**'
 app.config['MAIL_DEFAULT_SENDER'] = ('testwebtrica@gmail.com')
@@ -1060,6 +1061,50 @@ def uploadimages():
 #         socketio.emit('doctor response', json, room=roomname, callback=json, usernamess=str(username),
 #                       username22=str(curuser))
 
+@app.route("/good_to_know")
+def good_to_know():
+    query = {"for": "customer"}
+    customer = db.good_to_know.find_one(query)
+    query = {"for": "trainer"}
+    trainer = db.good_to_know.find_one(query)
+    return render_template("gtk.html",customer=customer,trainer=trainer)
+
+@app.route("/edit/gtk/<type>", methods=["GET","POST"])
+def edit_gtk(type):
+    try:
+        if request.method == 'GET':
+            # fetch data from admin table 
+            query = {"for": type}
+            data = db.good_to_know.find_one(query)
+            return render_template("edit_gtk.html",data=data)
+        else:
+            text = request.form.get("text")
+            forr = request.form.get("for")
+            if forr == "customer":
+                newvalues = {
+                    "$set": {                    
+                        'text': text,
+                    }
+                }
+                filter = {'for': forr}
+                db.good_to_know.update_one(filter, newvalues)
+                return redirect(url_for('good_to_know')) 
+            elif forr == "trainer":
+                newvalues = {
+                    "$set": {                    
+                        'text': text,
+                    }
+                }
+                filter = {'for': forr}
+                db.good_to_know.update_one(filter, newvalues)
+                return redirect(url_for('good_to_know')) 
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+    
+
+
 
 
 
@@ -1126,6 +1171,7 @@ def signup_api():
                         "notes":"Here you can add your notes..",
                         "wallet_cards": [],
                         "good_to_know":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae aperiam consectetur deserunt officiis quos soluta autem placeat labore fuga, pariatur voluptatem odit similique quibusdam natus, hic exercitationem quisquam velit delectus.",
+                        "gtk_seen":False,
                     }
                     db.customers.insert_one(newAccount)
                     return jsonify({
@@ -1312,7 +1358,8 @@ def trainersignup_api():
                     "available_dates": [],
                     "rating": "0",
                     "level": "0",
-                    "availability": "0"
+                    "availability": "0",
+                    "gtk_seen":False
                     
                 }
                 db.trainers.insert_one(newAccount)
@@ -1636,18 +1683,15 @@ def update_customer_stats_api(id):
         if request.method == 'POST':      
             if request.is_json:            
                 data = request.get_json()
-                today = data["today"]
-                goals = data["goals"]
                 notes = data["notes"]
-                if not today or not goals or not notes:
+                if not notes:
                         return jsonify({"success": False, "error": "Missing details"})
 
                 query = {'_id': ObjectId(id)}
                 user_data = db.customers.find_one(query)
                 if user_data is not None:
                     # Insert into db #
-                    newData = {'$set':{"today":today,
-                        "goals": goals,
+                    newData = {'$set':{
                         "notes": notes }}
                     db.customers.update_one(user_data,newData)
                     return jsonify({    
@@ -1765,10 +1809,28 @@ def signin_api():
                                             "trainer_certified":True, 
                                             "success": True })
                         elif trainer['trainer_certified'] == "False":
+                            query = {"for": "trainer"}
+                            goodtoknow=db.good_to_know.find_one(query)
                             return jsonify({"id": str(trainer['_id']),
                                             "email": trainer['email'],
-                                            "trainer_certified":False,
-                                            "success":True })
+                                            "first_name": trainer['first_name'],
+                                            "last_name": trainer['last_name'],
+                                            "contact": trainer['phone'],
+                                            "region": trainer['region'],
+                                            "trainer-profile-pic": trainer['profile_pic'],
+                                            "status": trainer['status'],
+                                            "bio": trainer['bio'],
+                                            "today": trainer['today'],
+                                            "goals": trainer['goals'],
+                                            "notes": trainer['notes'],
+                                            "available_dates": trainer['available_dates'],
+                                            "profile_pic_path": "static/images/trainers/trainer-profile-pics",
+                                            "user_type": "trainer",
+                                            "good_to_know": goodtoknow['text'],
+                                            "gtk_seen": trainer['gtk_seen'],
+                                            "company_toggle":trainer['company_toggle'],
+                                            "trainer_certified":False, 
+                                            "success": True })
                     else:
                         return jsonify({
                             "success": False,
@@ -2164,6 +2226,9 @@ def add_trainer_availability_api(id):
                 date = data["date"]
                 starttime = data["start-time"]
                 endtime = data["end-time"]
+                # yeh wo changes hain jo karwani hai jalil se 
+                # gymid = data["gym-id"]
+
                 if not date or not starttime or not endtime:
                         return jsonify({"success": False, "error": "Missing details"})
                 query = {'_id': ObjectId(id)}
@@ -2173,7 +2238,14 @@ def add_trainer_availability_api(id):
                         "success": False, "error": "Invalid trainer id."
                     })
                 else:
-                    newdata = {"trainer_id":id,"trainer_email":user_data['email'],"date":date,"start-time":starttime,"end-time":endtime,"select-date":False}
+                    newdata = {"trainer_id":id,
+                    "trainer_email":user_data['email'],
+                    "date":date,
+                    "start-time":starttime,
+                    "end-time":endtime,
+                    "select-date":False,
+                    # "gym-id":gymid
+                    }
                     db.available_dates.insert_one(newdata)
                     return jsonify({    
                         "id": str(user_data['_id']),
@@ -2317,7 +2389,7 @@ def get_trainer_complete_sessions_api(id):
                 lists = []
                 # for loop
                 for i in user_data:
-                    i.update({"_id": str(i["_id"])})
+                    i.update({"_id": str(i["_id"]),"booking_id": str(i["booking_id"]),"gym_id": str(i["gym_id"])})
                     lists.append(i)
                 # end forloop
                 return jsonify({"success": True, "sessions": lists})                
@@ -2439,7 +2511,7 @@ def trainer_rating_api(id, sessionid):
 #     except Exception as e:
 #         return jsonify({"success": False, "error": str(e)})
 
-# ************ FETCH TRAINER AVAILABLE DATES FOR CUSTOMER API ************
+# ************ FETCH TRAINER AVAILABLE DATES FOR CUSTOMER API ************ ye wali lagiwi hai abhi ye hatwado jalil se
 @app.route("/fetch-trainer-available-dates-api/<id>", methods=["GET"])
 def fetch_trainer_available_dates_api(id):
     try:
@@ -2456,6 +2528,35 @@ def fetch_trainer_available_dates_api(id):
             return jsonify({"success": True, "available dates": lists})
             # end forloop
             
+        else:
+            return jsonify({"success": False, "error": "Invalid request"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+# ************ FETCH TRAINER AVAILABLE DATES FOR CUSTOMER API ************ ye new hai yeh lagay gi
+@app.route("/fetch-trainer-available-dates-api2", methods=["POST"])
+def fetch_trainer_available_dates_api2():
+    try:
+        if request.method == "POST":
+            if request.is_json:            
+                data = request.get_json()
+                trainer_id = data["trainer_id"]
+                gym_id = data["gym_id"]
+            
+                query = {'trainer_id': trainer_id,'gym-id':gym_id}
+                
+                # fetch all available dates of trainer with selected gym
+                datesData = db.available_dates.find(query)
+                lists = []
+                # for loop
+                for i in datesData:
+                    i.update({"_id": str(i["_id"])})
+                    lists.append(i)
+                return jsonify({"success": True, "available dates": lists})
+                # end forloop
+            else:
+                return jsonify({"success": False, "error": "Invalid json"})
+
         else:
             return jsonify({"success": False, "error": "Invalid request"})
     except Exception as e:
@@ -2695,7 +2796,7 @@ def get_customer_complete_sessions_api(id):
                 lists = []
                 # for loop
                 for i in user_data:
-                    i.update({"_id": str(i["_id"])})
+                    i.update({"_id": str(i["_id"]),"booking_id": str(i["booking_id"]),"gym_id": str(i["gym_id"])})
                     lists.append(i)
                 # end forloop
                 return jsonify({"success": True, "sessions": lists})                
@@ -2798,7 +2899,7 @@ def update_password_api():
                     return jsonify({"success":False, "error":"User didn't exist with this email"})
                 if customer_data is not None:
                     query = {"userid":ObjectId(user_id), "status":True}
-                    user_code = db.change_password.find_one(query)
+                    user_code = db.change_password.find_one(query).sort({"_id":-1})
                     if user_code is not None:
                         if code == user_code['code']:
                             if user_code['status'] is not False:
@@ -2928,9 +3029,9 @@ def update_bookings_api():
                 booking_month = data['booking_month']
                 date = data['date']
                 location = data['location']
-                latitude = data['latitude']
-                longitude = data['longitude']
-                if not customer_id or not trainer_id or not customer_name or not trainer_name or not customer_email or not customer_profile_pic or not package_type or not booking_time or not booking_date or not booking_month or not date or not location or not latitude or not longitude:
+                start_time = data['start_time']
+                end_time = data['end_time']
+                if not customer_id or not trainer_id or not customer_name or not trainer_name or not customer_email or not customer_profile_pic or not package_type or not booking_time or not booking_date or not booking_month or not date or not location:
                         return jsonify({"success": False, "error": "Missing Data in json"})
 
                 # fetch trainer profile pic 
@@ -2964,7 +3065,10 @@ def update_bookings_api():
                                 "accepted": False,
                                 "declined": False,
                                 "completed": False,
-                                "paid": False
+                                "paid": False,
+                                "start_time": start_time,
+                                "end_time": end_time
+
                             }
                 db.bookings.insert_one(newAccount)
 
@@ -2984,6 +3088,103 @@ def update_bookings_api():
                 return jsonify({
                     "success": True,
                     "message": "Booking done successfully",
+                    "Notification":"Sent"
+                })      
+            else:
+                return jsonify({"success":False , "error": "Invalid json format"})
+        else:
+            return jsonify({"success":False , "error": "Invalid request"})
+    except Exception as e:
+            return jsonify({"status": str(e)})
+
+
+# ************ UPDATE BOOKINGS API FROM ACTIVE PACKAGES ************
+@app.route("/update-bookings-from-active-packages-api", methods=["POST", "GET"])
+def update_bookings_from_active_packages_api(): 
+    try:   
+        if request.method == "POST":
+            if request.is_json:
+                data = request.get_json()
+                customer_id = data['customer_id']
+                trainer_id = data['trainer_id']
+                customer_name = data['customer_name']
+                trainer_name = data['trainer_name']
+                customer_email = data['customer_email']
+                customer_profile_pic = data['customer_profile_pic']
+                package_type = data['package_type']
+                booking_time = data['booking_time']
+                booking_date = data['booking_date']
+                booking_month = data['booking_month']
+                date = data['date']
+                location = data['location'] #gym id
+                start_time = data['start_time']
+                end_time = data['end_time']
+                if not customer_id or not trainer_id or not customer_name or not trainer_name or not customer_email or not customer_profile_pic or not package_type or not booking_time or not booking_date or not booking_month or not date or not location:
+                        return jsonify({"success": False, "error": "Missing Data in json"})
+
+                # fetch trainer profile pic 
+                query = {'_id': ObjectId(trainer_id)}
+                trainerdata = db.trainers.find_one(query)
+
+                # now fetch gym name,latitude,longitude
+                query = {'_id': ObjectId(location)}
+                gymData= db.gyms.find_one(query)
+                
+                newAccount = {
+                                "customer_id": customer_id,
+                                "trainer_id": trainer_id,
+                                "customer_name": customer_name,
+                                "trainer_name": trainerdata['first_name'],
+                                "customer_email": customer_email,
+                                "customer_profile_pic": customer_profile_pic,
+                                "trainer_profile_pic": trainerdata['profile_pic'],
+                                "package_type": package_type,
+                                "booking_time": booking_time,
+                                "booking_date": booking_date,
+                                "booking_month": booking_month,
+                                "date": date,
+                                "location": gymData['name'],
+                                "Latitude": gymData['latitude'],
+                                "Longitude": gymData['longitude'],
+                                # defaults 
+                                "dateAdded": datetime.now(),
+                                "customer_profile_pic_path": "static/images/customers/profile-pics",
+                                "trainer_profile_pic_path": "static/images/trainers/trainer-profile-pics",
+                                "accepted": False,
+                                "declined": False,
+                                "completed": False,
+                                "paid": False,
+                                "start_time": start_time,
+                                "end_time": end_time
+
+                            }
+                db.bookings.insert_one(newAccount)
+                query = {'customer_id': customer_id,"trainer_id": trainer_id}
+                bought_packages = db.bought_packages.find_one(query)
+                if bought_packages["available_trainings"] > 0:
+                    available_trainings = bought_packages["available_trainings"]
+                    add_available_trainings = available_trainings - int(1)
+                    newdata = {"$set": {'available_trainings': add_available_trainings}}
+                    db.bought_packages.update_one(query,newdata)
+                else:
+                    return jsonify({"success":False,"error":"No active packages found"})
+
+                # for notification
+                header = {"Content-Type": "application/json; charset=utf-8",
+                "Authorization": "Basic MmU2ZTg3MGUtZGY4Ny00ODZkLTllNWUtOGE3ZTE0MDExOWRm"}
+                payload = {"app_id": "e93cd485-6e59-486c-a6d0-c3710a226bc3",
+                        # "include_external_user_ids": ["123456789"],
+                        "include_external_user_ids": [trainer_id],
+                        "channel_for_external_user_ids": "push",
+                        "data": {"route": "trainer-new-booking-request"},
+                        "contents": {"en": "You have a new booking request from %a" %(customer_name)}}                
+                req = requests.post("https://onesignal.com/api/v1/notifications", headers=header, data=json.dumps(payload))                
+                print(req.status_code, req.reason)
+                # end notification 
+
+                return jsonify({
+                    "success": True,
+                    "message": "Booking done successfully from Active Package",
                     "Notification":"Sent"
                 })      
             else:
@@ -3251,12 +3452,12 @@ def qrcode_data_api():
                 usertype = data['user_type'] #trainer or customer
                 user_id = data['user_id']
                 time = data['time']
-                bookingid = data['booking_id']
+                # bookingid = data['booking_id']
                 if not data['gym_id'] or not data['user_type'] or not data['user_id']:
                     return jsonify({"success":False,"error":"Missing some required data"})
                 # bookingid = data['booking_id']
                 date = datetime.now()
-                date = date.strftime("%x")
+                # date = date.strftime("%x")
                 date = (str(date.day)+"-"+str(date.month)+"-"+str(date.year)) #format 22-11-2021
                 #yahan masla ye hai ke ye sirf 1 booking id return karega agar same day mai same customer ki 2 bookings hai tu ye sirf 1 py kaam karega.
                 if usertype == 'customer':
@@ -3278,6 +3479,8 @@ def qrcode_data_api():
                 bookingData = db.bookings.find_one(query)
                 query = {'_id':ObjectId(gym_id)}
                 gymData = db.gyms.find_one(query)
+                if not gymData:
+                    return jsonify({"success":False,"status":"Invalid QR code"})
                 if bookingData['accepted'] != True:
                     return jsonify({"success":False,"error":"Booking is not accepted by trainer"})
                 elif bookingData['paid'] != True:
@@ -3293,9 +3496,9 @@ def qrcode_data_api():
                         'trainer_name': bookingData['trainer_name'],
                         'customer_name': bookingData['customer_name'],
                         'gym_id': gymData['_id'],
-                        'location': gymData['name'],
-                        'latitude': gymData['latitude'],
-                        'longitude': gymData['longitude'],
+                        'location': bookingData['location'],
+                        'latitude': bookingData['Latitude'],
+                        'longitude': bookingData['Longitude'],
                         'package': bookingData['package_type'],
                         'customer_profile_pic': bookingData['customer_profile_pic'],
                         'customer_profile_pic_path': "static/images/customers/profile-pics",
@@ -3308,7 +3511,9 @@ def qrcode_data_api():
                         'rating':"pending",
                         'completed': False,
                         'customer_Checkin':True,
-                        'customer_Checkin_Time':time
+                        'customer_Checkin_Time':time,
+                        'start_time': bookingData['start_time'],
+                        'end_time': bookingData['end_time'],
                         }
                         db.sessions.insert_one(newSession)
                     else:
@@ -3320,7 +3525,7 @@ def qrcode_data_api():
                         }
                         filter = {'booking_id': ObjectId(bookingid)}
                         db.sessions.update_one(filter, updateSession)
-                    return jsonify({"success":True,"status":"Customer Checkin Successfully"})
+                    return jsonify({"success":True,"status":"Customer Checkin Successfully","end_time":bookingData['end_time'],"booking_id":bookingid})
                 elif usertype == "trainer":
                     sessiondata=db.sessions.find_one({'booking_id':ObjectId(bookingid)})
                     if sessiondata is None:
@@ -3332,9 +3537,9 @@ def qrcode_data_api():
                         'trainer_name': bookingData['trainer_name'],
                         'customer_name': bookingData['customer_name'],
                         'gym_id': gymData['_id'],
-                        'location': gymData['name'],
-                        'latitude': gymData['latitude'],
-                        'longitude': gymData['longitude'],
+                        'location': bookingData['location'],
+                        'latitude': bookingData['Latitude'],
+                        'longitude': bookingData['Longitude'],
                         'package': bookingData['package_type'],
                         'customer_profile_pic': bookingData['customer_profile_pic'],
                         'customer_profile_pic_path': "static/images/customers/profile-pics",
@@ -3347,7 +3552,9 @@ def qrcode_data_api():
                         'rating':"pending",
                         'completed': False,
                         'trainer_Checkin':True,
-                        'trainer_Checkin_Time':time
+                        'trainer_Checkin_Time':time,
+                        'start_time': bookingData['start_time'],
+                        'end_time': bookingData['end_time'],
                         }
                         db.sessions.insert_one(newSession)
                     else:
@@ -3359,13 +3566,31 @@ def qrcode_data_api():
                         }
                         filter = {'booking_id': ObjectId(bookingid)}
                         db.sessions.update_one(filter, updateSession)
-                return jsonify({"success":True,"status":"Trainer Checkin Successfully"})
+                return jsonify({"success":True,"status":"Trainer Checkin Successfully","end_time":bookingData['end_time'],"booking_id":bookingid})
 
             else:
                 return jsonify({"success":False,"error":"Invalid json format"})
         
         else:
             return jsonify({"success":False,"error":"Invalid request"})
+    except Exception as e:
+        return jsonify({"status":str(e)})
+
+# ************ ENDING SESSION API ************
+@app.route("/session-end-api/<bookingid>", methods=["POST", "GET"])
+def session_end_api(bookingid):
+    try:
+        if request.method == "POST":
+            query = {'booking_id': ObjectId(bookingid)}
+            sessionData = db.sessions.find_one(query)
+            if sessionData is not None:
+                update = {"$set": {'completed': True}}
+                db.sessions.update_one(query, update)
+                return jsonify({"success":True,"status":"Session Completed Successfully"})
+            else:
+                return jsonify({"success":False,"error":"No Session exist with given booking id"})
+        else:
+            return jsonify({"success":False,"error":"Invalid request method"})
     except Exception as e:
         return jsonify({"status":str(e)})
 
@@ -3428,32 +3653,46 @@ def payment_done_api():
                 query,
                 {"$set": {"paid": True}}
                 )
-                # now store a new session into database
-                query = {'_id':ObjectId(bookingid)}
                 bookingData = db.bookings.find_one(query)
-                newSession = {
-                'customer_id': bookingData['customer_id'],
-                'trainer_id': bookingData['trainer_id'],
-                'dateAdded': bookingData['dateAdded'],
-                'trainer_name': bookingData['trainer_name'],
-                'customer_name': bookingData['customer_name'],
-                # 'location': bookingData['location'],
-                # 'latitude': bookingData['latitude'],
-                # 'longitude': bookingData['longitude'],
-                'package': bookingData['package_type'],
-                'customer_profile_pic': bookingData['customer_profile_pic'],
-                'customer_profile_pic_path': "static/images/customers/profile-pics",
-                'trainer_profile_pic': bookingData['trainer_profile_pic'],
-                'trainer_profile_pic_path': "static/images/trainers/trainer-profile-pics",
-                'booking_time': bookingData['booking_time'],
-                'date': bookingData['date'],
-                'booking_date': bookingData['booking_date'],
-                'booking_month': bookingData['booking_month'],
-                'rating':"pending",
-                'completed': False,
-                }
-                db.sessions.insert_one(newSession)
-
+                # ............ work after payment
+                # now update available trainings for the specific customer and trainer
+                if "5" in bookingData['package_type']:
+                   query = {"customer_id":bookingData['customer_id'],"trainer_id":bookingData['trainer_id']}
+                   bought_packages = db.bought_packages.find_one(query)
+                   if bought_packages:
+                        available_trainings = bought_packages["available_trainings"]
+                        add_available_trainings = available_trainings + int(4)
+                        newdata = {"$set": {'available_trainings': add_available_trainings,'package_name':bookingData['package_type'],'trainer_profile_pic':bookingData['trainer_profile_pic'],"trainer_name":bookingData['trainer_name']}}
+                        db.bought_packages.update_one(query,newdata)
+                   else:
+                        newdata= {
+                            "customer_id":bookingData['customer_id'],
+                            "trainer_id":bookingData['trainer_id'],
+                            "available_trainings": int(4),
+                            "package_name":bookingData['package_type'],
+                            "trainer_profile_pic":bookingData['trainer_profile_pic'],
+                            "trainer_name":bookingData['trainer_name']
+                        }
+                        db.bought_packages.insert_one(newdata)
+                elif "10" in bookingData['package_type']:
+                   query = {"customer_id":bookingData['customer_id'],"trainer_id":bookingData['trainer_id']}
+                   bought_packages = db.bought_packages.find_one(query)
+                   if bought_packages:
+                        available_trainings = bought_packages["available_trainings"]
+                        add_available_trainings = available_trainings + int(9)
+                        newdata = {"$set": {'available_trainings': add_available_trainings,'package_name':bookingData['package_type'],'trainer_profile_pic':bookingData['trainer_profile_pic'],"trainer_name":bookingData['trainer_name']}}
+                        db.bought_packages.update_one(query,newdata)
+                   else:
+                        newdata= {
+                            "customer_id":bookingData['customer_id'],
+                            "trainer_id":bookingData['trainer_id'],
+                            "available_trainings": int(9),
+                            "package_name":bookingData['package_type'],
+                            "trainer_profile_pic":bookingData['trainer_profile_pic'],
+                            "trainer_name":bookingData['trainer_name']
+                        }
+                        db.bought_packages.insert_one(newdata)
+                # ............
                 return jsonify ({"success":True, "status":"Transaction saved successfuly"})
             else:
                 return jsonify({"success":False,"error":"Invalid json format"})
@@ -3484,6 +3723,35 @@ def gtk_seen_api(id):
             return jsonify({"success":True})
         else:
             return jsonify({"success":False,"status":"Already seen"})
+
+
+# ************ FETCH ACTIVE PACKAGES/AVAILABLE TRAININGS FOR CUSTOMERS ************
+@app.route("/fetch-active-packages-api/<id>")
+def fetch_active_packages(id):
+    try:
+        query = {'customer_id': id, "available_trainings":{"$gt":0}}
+        bought_packages = db.bought_packages.find(query)
+        lists = []
+        for i in bought_packages:
+            i.update({"_id": str(i["_id"])})
+            lists.append(i)
+        return jsonify({"success":True,"active_packages":lists})
+    except Exception as e:
+        return jsonify({"status":str(e)})
+
+# ************ FETCH DEACTIVE PACKAGES/AVAILABLE TRAININGS FOR CUSTOMERS ************
+@app.route("/fetch-deactive-packages-api/<id>")
+def fetch_deactive_packages(id):
+    try:
+        query = {'customer_id': ObjectId(id), "available_trainings":0}
+        bought_packages = db.bought_packages.find(query)
+        lists = []
+        for i in bought_packages:
+            i.update({"_id": str(i["_id"])})
+            lists.append(i)
+        return jsonify({"success":True,"deactive_packages":lists})
+    except Exception as e:
+        return jsonify({"status":str(e)})
 
 
 # ************************************* CHATING START *********************************************** 
