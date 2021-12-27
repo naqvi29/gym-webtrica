@@ -66,7 +66,7 @@ socketio = SocketIO(app)
 
 def id_generator(size=8, chars=string.ascii_uppercase + string.digits + string.ascii_lowercase):
     return ''.join(random.choice(chars) for _ in range(size))
-def id_generator2(size=4, chars=string.ascii_uppercase + string.digits + string.ascii_lowercase):
+def id_generator2(size=4, chars=string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
 def allowed_file(filename):
@@ -1746,13 +1746,9 @@ def signin_api():
                             "mud_scheme_path": "static/images/customers/mud-schemes",
                             "today": customer['today'],
                             "goals": customer['goals'],
-                            "active packages": customer['active packages'],
-                            "inactive packages": customer['inactive packages'],
                             "notes": customer['notes'],
-                            "wallet_cards": customer['wallet_cards'],
                             "good_to_know": goodtoknow['text'],
                             "gtk_seen": customer['gtk_seen'],
-                            "key": stripe_keys['publishable_key'],
                             "success": True, 
 
                         })
@@ -1797,10 +1793,7 @@ def signin_api():
                                             "trainer-profile-pic": trainer['profile_pic'],
                                             "status": trainer['status'],
                                             "bio": trainer['bio'],
-                                            "today": trainer['today'],
-                                            "goals": trainer['goals'],
                                             "notes": trainer['notes'],
-                                            "available_dates": trainer['available_dates'],
                                             "profile_pic_path": "static/images/trainers/trainer-profile-pics",
                                             "user_type": "trainer",
                                             "good_to_know": goodtoknow['text'],
@@ -1820,10 +1813,7 @@ def signin_api():
                                             "trainer-profile-pic": trainer['profile_pic'],
                                             "status": trainer['status'],
                                             "bio": trainer['bio'],
-                                            "today": trainer['today'],
-                                            "goals": trainer['goals'],
                                             "notes": trainer['notes'],
-                                            "available_dates": trainer['available_dates'],
                                             "profile_pic_path": "static/images/trainers/trainer-profile-pics",
                                             "user_type": "trainer",
                                             "good_to_know": goodtoknow['text'],
@@ -1850,6 +1840,100 @@ def signin_api():
                 })
         else:
             return jsonify({"success": False, "error": "Invalid request"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+# ************ SIGNIN DETAILS RESPONSE CALL ************note:new for arsalan
+
+@app.route("/signin-resp/<id>")
+def signin_resp_api(id):
+    try:
+        query={"_id":ObjectId(id)}
+        customer = db.customers.find_one(query)
+        company = db.company.find_one(query)
+        trainer = db.trainers.find_one(query)
+        if customer is not None:
+            query = {"for": "customer"}
+            goodtoknow=db.good_to_know.find_one(query)
+            return jsonify({
+                "id": str(customer['_id']),
+                "email": customer['email'],
+                "first_name": customer['first_name'],
+                "last_name": customer['last_name'],
+                "contact": customer['phone'],
+                "profile_pic" : customer['profile_pic'],
+                "profile_pic_path": "static/images/customers/profile-pics",
+                "user_type": "customer",
+                "mud_scheme": customer['mud_scheme'],
+                "mud_scheme_path": "static/images/customers/mud-schemes",
+                "today": customer['today'],
+                "goals": customer['goals'],
+                "notes": customer['notes'],
+                "good_to_know": goodtoknow['text'],
+                "gtk_seen": customer['gtk_seen'],
+                "success": True, 
+
+            })
+        elif trainer is not None:                                        
+            query = {"for": "trainer"}
+            goodtoknow=db.good_to_know.find_one(query)
+            if trainer['trainer_certified'] == "True":
+                return jsonify({"id": str(trainer['_id']),
+                                "email": trainer['email'],
+                                "first_name": trainer['first_name'],
+                                "last_name": trainer['last_name'],
+                                "contact": trainer['phone'],
+                                "region": trainer['region'],
+                                "trainer-profile-pic": trainer['profile_pic'],
+                                "status": trainer['status'],
+                                "bio": trainer['bio'],
+                                "notes": trainer['notes'],
+                                "profile_pic_path": "static/images/trainers/trainer-profile-pics",
+                                "user_type": "trainer",
+                                "good_to_know": goodtoknow['text'],
+                                "gtk_seen": trainer['gtk_seen'],
+                                "company_toggle":trainer['company_toggle'],
+                                "trainer_certified":True, 
+                                "success": True })
+            elif trainer['trainer_certified'] == "False":
+                return jsonify({"id": str(trainer['_id']),
+                                "email": trainer['email'],
+                                "first_name": trainer['first_name'],
+                                "last_name": trainer['last_name'],
+                                "contact": trainer['phone'],
+                                "region": trainer['region'],
+                                "trainer-profile-pic": trainer['profile_pic'],
+                                "status": trainer['status'],
+                                "bio": trainer['bio'],
+                                "notes": trainer['notes'],
+                                "profile_pic_path": "static/images/trainers/trainer-profile-pics",
+                                "user_type": "trainer",
+                                "good_to_know": goodtoknow['text'],
+                                "gtk_seen": trainer['gtk_seen'],
+                                "company_toggle":trainer['company_toggle'],
+                                "trainer_certified":False, 
+                                "success": True })
+
+        elif company is not None:
+            return jsonify({
+                "id": str(company['_id']),
+                "organizational number":company['organizational_number'],
+                "email": company['email'],
+                "company": company['company_name'],
+                "contact person": company['contact_person'],
+                "contact": company['phone'],
+                "company_profile_pic": company['company_profile_pic'],
+                "profile_pic_path": "static/images/company/company-profile-pics",
+                "region": company['region'],
+                "user_type": "company",
+                "success": True,
+            })    
+        else:
+            return jsonify({
+                "success": False,
+                "error": "Invalid Id"
+            })
+        
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
@@ -2227,9 +2311,9 @@ def add_trainer_availability_api(id):
                 starttime = data["start-time"]
                 endtime = data["end-time"]
                 # yeh wo changes hain jo karwani hai jalil se 
-                # gymid = data["gym-id"]
+                gymid = data["gym-id"]
 
-                if not date or not starttime or not endtime:
+                if not date or not starttime or not endtime or not gymid:
                         return jsonify({"success": False, "error": "Missing details"})
                 query = {'_id': ObjectId(id)}
                 user_data = db.trainers.find_one(query)
@@ -2241,10 +2325,10 @@ def add_trainer_availability_api(id):
                     newdata = {"trainer_id":id,
                     "trainer_email":user_data['email'],
                     "date":date,
-                    "start-time":starttime,
-                    "end-time":endtime,
-                    "select-date":False,
-                    # "gym-id":gymid
+                    "start_time":starttime,
+                    "end_time":endtime,
+                    "select_date":False,
+                    "gym_id":gymid
                     }
                     db.available_dates.insert_one(newdata)
                     return jsonify({    
@@ -2543,7 +2627,7 @@ def fetch_trainer_available_dates_api2():
                 trainer_id = data["trainer_id"]
                 gym_id = data["gym_id"]
             
-                query = {'trainer_id': trainer_id,'gym-id':gym_id}
+                query = {'trainer_id': trainer_id,'gym_id':gym_id}
                 
                 # fetch all available dates of trainer with selected gym
                 datesData = db.available_dates.find(query)
@@ -2831,6 +2915,10 @@ def forgot_password_api():
                     msg.html = str("To update password of your account use the following code "
                                     "as confirmation code " + str(code))
                     mail.send(msg)
+                    all_false = {"$set": {'status': False}}
+                    query = {'userid': ObjectId(customer_data['_id'])}
+                    db.change_password.update_many(query,all_false)
+
                     newvalues = {"userid": customer_data['_id'], "code":code, "user_account":"customer", "status":True, "time":datetime.now()}
                     db.change_password.insert_one(newvalues)
                     return jsonify(
@@ -2844,6 +2932,9 @@ def forgot_password_api():
                     msg.html = str("To update password of your account use the following code "
                                     "as confirmation code " + str(code))
                     mail.send(msg)
+                    all_false = {"$set": {'status': False}}
+                    query = {'userid': ObjectId(company_data['_id'])}
+                    db.change_password.update_many(query,all_false)
                     newvalues = {"userid": company_data['_id'], "code":code, "user_account":"company", "status":True, "time":datetime.now()}
                     db.change_password.insert_one(newvalues)
                     # cursor.execute('''insert into change_password (user_id, code) 
@@ -2861,6 +2952,9 @@ def forgot_password_api():
                     msg.html = str("To update password of your account use the following code "
                                     "as confirmation code " + str(code))
                     mail.send(msg)
+                    all_false = {"$set": {'status': False}}
+                    query = {'userid': ObjectId(trainer_data['_id'])}
+                    db.change_password.update_many(query,all_false)
                     newvalues = {"userid": trainer_data['_id'], "code":code, "user_account":"trainer", "status":True, "time":datetime.now()}
                     db.change_password.insert_one(newvalues)
                     # cursor.execute('''insert into change_password (user_id, code) 
@@ -3089,6 +3183,92 @@ def update_bookings_api():
                     "success": True,
                     "message": "Booking done successfully",
                     "Notification":"Sent"
+                })      
+            else:
+                return jsonify({"success":False , "error": "Invalid json format"})
+        else:
+            return jsonify({"success":False , "error": "Invalid request"})
+    except Exception as e:
+            return jsonify({"status": str(e)})
+
+# ************ UPDATE BOOKINGS API 2 ************ for arsalan
+@app.route("/update-bookings-api2", methods=["POST", "GET"])
+def update_bookings_api2(): 
+    try:   
+        if request.method == "POST":
+            if request.is_json:
+                data = request.get_json()
+                customer_id = data['customer_id']
+                trainer_id = data['trainer_id']
+                package_id = data['package_id']
+                booking_time = data['booking_time']
+                date = data['date']
+                location = data['gym_id']
+                start_time = data['start_time']
+                end_time = data['end_time']
+                if not customer_id or not trainer_id or not  package_id or not booking_time or not date or not location:
+                        return jsonify({"success": False, "error": "Missing Data in json"})
+
+                # fetch trainer profile pic 
+                query = {'_id': ObjectId(trainer_id)}
+                trainerdata = db.trainers.find_one(query)
+
+                # now fetch gym name,latitude,longitude
+                query = {'_id': ObjectId(location)}
+                gymData= db.gyms.find_one(query)
+
+                # now fetch customer details 
+                query = {'_id': ObjectId(customer_id)}
+                customerData = db.customers.find_one(query)
+
+                # now fetch package name
+                query = {'_id': ObjectId(package_id)}
+                packageData = db.trainer_packages.find_one(query)
+                
+                newAccount = {
+                                "customer_id": customer_id,
+                                "trainer_id": trainer_id,
+                                "customer_name": customerData['first_name'],
+                                "trainer_name": trainerdata['first_name'],
+                                "customer_email": customerData['email'],
+                                "customer_profile_pic": customerData['profile_pic'],
+                                "trainer_profile_pic": trainerdata['profile_pic'],
+                                "package_type": packageData['name'],
+                                "booking_time": booking_time,
+                                "date": date,
+                                "location": gymData['name'],
+                                "Latitude": gymData['latitude'],
+                                "Longitude": gymData['longitude'],
+                                # defaults 
+                                "dateAdded": datetime.now(),
+                                "customer_profile_pic_path": "static/images/customers/profile-pics",
+                                "trainer_profile_pic_path": "static/images/trainers/trainer-profile-pics",
+                                "accepted": False,
+                                "declined": False,
+                                "completed": False,
+                                "paid": False,
+                                "start_time": start_time,
+                                "end_time": end_time
+
+                            }
+                db.bookings.insert_one(newAccount)
+
+                # for notification
+                header = {"Content-Type": "application/json; charset=utf-8",
+                "Authorization": "Basic MmU2ZTg3MGUtZGY4Ny00ODZkLTllNWUtOGE3ZTE0MDExOWRm"}
+                payload = {"app_id": "e93cd485-6e59-486c-a6d0-c3710a226bc3",
+                        # "include_external_user_ids": ["123456789"],
+                        "include_external_user_ids": [trainer_id],
+                        "channel_for_external_user_ids": "push",
+                        "data": {"route": "trainer-new-booking-request"},
+                        "contents": {"en": "You have a new booking request from %a" %(customerData['first_name'])}}                
+                req = requests.post("https://onesignal.com/api/v1/notifications", headers=header, data=json.dumps(payload))                
+                print(req.status_code, req.reason)
+                # end notification 
+
+                return jsonify({
+                    "success": True,
+                    "message": "Booking done successfully"
                 })      
             else:
                 return jsonify({"success":False , "error": "Invalid json format"})
