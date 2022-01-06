@@ -1884,7 +1884,7 @@ def signin_resp_api(id):
                                 "last_name": trainer['last_name'],
                                 "contact": trainer['phone'],
                                 "region": trainer['region'],
-                                "trainer-profile-pic": trainer['profile_pic'],
+                                "trainer_profile_pic": trainer['profile_pic'],
                                 "status": trainer['status'],
                                 "bio": trainer['bio'],
                                 "notes": trainer['notes'],
@@ -1902,7 +1902,7 @@ def signin_resp_api(id):
                                 "last_name": trainer['last_name'],
                                 "contact": trainer['phone'],
                                 "region": trainer['region'],
-                                "trainer-profile-pic": trainer['profile_pic'],
+                                "trainer_profile_pic": trainer['profile_pic'],
                                 "status": trainer['status'],
                                 "bio": trainer['bio'],
                                 "notes": trainer['notes'],
@@ -1977,7 +1977,8 @@ def customer_bookings(id):
     try:
         if request.method == "GET":
             # trainersdata = db.trainers.find({"status":True}, {"password": 0, "hash": 0})
-            query = {'customer_id': id,'accepted':True,"paid":False} 
+            # query = {'customer_id': id,'accepted':True,"paid":False} 
+            query = {'customer_id': id,"paid":False} 
             booking_data = db.bookings.find(query)
             lists = []
             for i in booking_data:
@@ -2345,37 +2346,45 @@ def add_trainer_availability_api(id):
         return jsonify({"success": False, "error": str(e)})   
 
 
-# ************ UPDATE TRAINER PACKAGES************ old
-# note:yahan py id mai trainer id ayegi or package mai sirf ["1-training","5-training","10-training","Mud-scheme","training scheme"] in mai se koi 1 value aegi    
-# @app.route("/update-trainer-packages-api/<id>/<package>", methods=["POST"])
-# def update_trainer_packages_api(id,package):
+    
+# ************ UPDATE TRAINER PACKAGES************ OLD
+#yahan /<id> mai package id aegi jo edit honi hai. or agar price or package_name dono edit karne hai tu dono bhejo warna sirf 1 bhi bhej sakty ho.
+# @app.route("/update-trainer-packages-api/<id>", methods=["POST"])
+# def update_trainer_packages_api(id):
 #     try:
-#         if request.method == 'POST':      
-#             if request.is_json:
-#                 data = request.get_json()
-#                 price = data["price"]
-#                 if not price:
-#                     return jsonify({"success": False, "error": "Missing Price"})
-#                 query = {'_id': ObjectId(id)}
-#                 user_data = db.trainers.find_one(query)
-#                 if user_data is not None:
-#                     email = user_data["email"]
-#                     query = {'trainer_email': email ,'name':package}
-#                     packagedata = db.trainer_packages.find_one(query)
-#                     if not packagedata:
-#                         return jsonify ({"success": False, "error":"invalid package name in API"})
-#                     newData = {'$set':{"price": price }}
-#                     db.trainer_packages.update_one(packagedata,newData)
+#         if request.method == 'POST':
+#             name = None
+#             if request.form.get('package_name'):
+#                 name = request.form.get('package_name')
+#             price = None
+#             if request.form.get('price'):
+#                 price = request.form.get('price')
+#             if not request.form.get('package_name') and not request.form.get('price'):
+#                 return jsonify({"success": False, "error": "Missing Price and name"})                
+#             query = {'_id': ObjectId(id)}
+#             package_data = db.trainer_packages.find_one(query)
+#             if package_data is not None:
+#                 if name == None:
+#                     newData = {'$set':{"price": price}}
+#                     db.trainer_packages.update_one(package_data,newData)
 #                     return jsonify ({"success": True, "newprice":price})
+#                 elif price == None:
+#                     newData = {'$set':{"name":name}}
+#                     db.trainer_packages.update_one(package_data,newData)
+#                     return jsonify ({"success": True, "newname":name})
+#                 else:
+#                     newData = {'$set':{"name":name, "price":price}}
+#                     db.trainer_packages.update_one(package_data,newData)
+#                     return jsonify ({"success": True, "newname":name,"newprice":price})
 #             else:
-#                 return jsonify({"success": False, "msg": "Invalid data format"})
+#                 return jsonify ({"success": False, "error":"invalid package id"})
 #         else:
 #             return jsonify({"success": False, "msg": "Invalid request"})
 
 #     except Exception as e:
 #         return jsonify({"success": False, "error": str(e)})
-    
-# ************ UPDATE TRAINER PACKAGES************ NEW
+
+    # ************ UPDATE TRAINER PACKAGES************ NEW
 #yahan /<id> mai package id aegi jo edit honi hai. or agar price or package_name dono edit karne hai tu dono bhejo warna sirf 1 bhi bhej sakty ho.
 @app.route("/update-trainer-packages-api/<id>", methods=["POST"])
 def update_trainer_packages_api(id):
@@ -2387,23 +2396,17 @@ def update_trainer_packages_api(id):
             price = None
             if request.form.get('price'):
                 price = request.form.get('price')
-            if not request.form.get('package_name') and not request.form.get('price'):
-                return jsonify({"success": False, "error": "Missing Price and name"})                
+            desc = None
+            if request.form.get("desc"):
+                desc = request.form.get('desc')
+            if not request.form.get('package_name') and not request.form.get('price') and not request.form.get('desc'):
+                return jsonify({"success": False, "error": "Missing Price, description and name"})                
             query = {'_id': ObjectId(id)}
             package_data = db.trainer_packages.find_one(query)
             if package_data is not None:
-                if name == None:
-                    newData = {'$set':{"price": price}}
-                    db.trainer_packages.update_one(package_data,newData)
-                    return jsonify ({"success": True, "newprice":price})
-                elif price == None:
-                    newData = {'$set':{"name":name}}
-                    db.trainer_packages.update_one(package_data,newData)
-                    return jsonify ({"success": True, "newname":name})
-                else:
-                    newData = {'$set':{"name":name, "price":price}}
-                    db.trainer_packages.update_one(package_data,newData)
-                    return jsonify ({"success": True, "newname":name,"newprice":price})
+                newData = {'$set':{"name":name, "price":price,"desc":desc}}
+                db.trainer_packages.update_one(package_data,newData)
+                return jsonify ({"success": True, "newname":name,"newprice":price,"newdesc":desc})
             else:
                 return jsonify ({"success": False, "error":"invalid package id"})
         else:
@@ -2417,25 +2420,30 @@ def update_trainer_packages_api(id):
 @app.route("/add-trainer-packages-api/<id>", methods=["POST"])
 def add_trainer_packages_api(id):
     try:
-        if request.method == 'POST':
-            name = request.form.get('package_name')
-            price = request.form.get('price')
-            if not name or not price:
-                return jsonify({"success": False, "error": "Missing Price and name"})                
-            query = {'_id': ObjectId(id)}            
-            trainer_data = db.trainers.find_one(query)
-            if trainer_data is not None:
-                email = trainer_data['email']
+        if request.method == 'POST':            
+            if request.is_json:
+                data = request.get_json()
+                name = data['package_name']
+                price = data['price']
+                desc = data['desc']
+                if not name or not price or not desc:
+                    return jsonify({"success": False, "error": "Missing Data"})                
+                query = {'_id': ObjectId(id)}            
+                trainer_data = db.trainers.find_one(query)
+                if trainer_data is not None:
+                    email = trainer_data['email']
+                else:
+                    return jsonify({"status":False,"error":"Invalid trainer id or trainer doesn't exist"})
+                query = {'trainer_email': email,'name':name}
+                package_data = db.trainer_packages.find_one(query)
+                if package_data is None:
+                    newData = {"price": price,"name":name,"desc":desc,"trainer_email":email}
+                    db.trainer_packages.insert_one(newData)
+                    return jsonify ({"success": True, "status":"Package Added"})
+                else:
+                    return jsonify ({"success": False, "error":"Package already exist"})
             else:
-                return jsonify({"status":False,"error":"Invalid trainer id or trainer doesn't exist"})
-            query = {'trainer_email': email,'name':name}
-            package_data = db.trainer_packages.find_one(query)
-            if package_data is None:
-                newData = {"price": price,"name":name,"desc":"lorem","trainer_email":email}
-                db.trainer_packages.insert_one(newData)
-                return jsonify ({"success": True, "status":"Package Added"})
-            else:
-                return jsonify ({"success": False, "error":"Package already exist"})
+                return jsonify({"success":False,"msg":"Invalid Json"})
         else:
             return jsonify({"success": False, "msg": "Invalid request"})
 
@@ -2646,6 +2654,40 @@ def fetch_trainer_available_dates_api2():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
+# ************ FETCH TRAINER AVAILABLE DATES FOR TRAINER API ************ ye wali trainer keliye hai add availability karty time usko pata chalega kon kon si dates py already availabilty haii.
+@app.route("/fetch-trainer-existing-availablity-api", methods=["POST"])
+def fetch_trainer_existing_availability_api():
+    try:
+        if request.method == "POST":
+            if request.is_json:            
+                data = request.get_json()
+                trainer_id = data["trainer_id"]
+                gym_id = data["gym_id"]
+            
+                query = {'trainer_id': trainer_id,'gym_id':gym_id}
+                
+                # fetch all available dates of trainer with selected gym
+                datesData = db.available_dates.find(query)
+                lists = []
+                # for loop
+                for i in datesData:
+                    if i['_id'] or i['date'] or i['start_time'] or i['end_time']:
+                        i.update({"_id": str(i["_id"]),"date":i['date'],"start_time":i['start_time'],"end_time":i["end_time"]})
+                        # remove unwanted keys
+                        entries_to_remove = ("trainer_email","select_date")
+                        for k in entries_to_remove:
+                            i.pop(k, None)
+                        lists.append(i)
+                return jsonify({"success": True, "available dates": lists})
+                # end forloop
+            else:
+                return jsonify({"success": False, "error": "Invalid json"})
+
+        else:
+            return jsonify({"success": False, "error": "Invalid request"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
 
 # ************ ADD NEW WALLET CARD FOR CUSTOMER ************
 @app.route("/add-walletcard-customer-api/<id>", methods=["POST"])
@@ -2813,8 +2855,11 @@ def contact_us_for_customer_api(id):
 def validate_promocode_api():
     try:
         if request.method == "POST":
-                code = request.form.get("code")
-                price = request.form.get("price")
+            
+            if request.is_json:
+                data = request.get_json()
+                code = data['code']
+                price = data['price']
                 query= {'name': code}
                 promo_codes = db.promo_codes.find_one(query)
                 if promo_codes is not None:
@@ -2830,6 +2875,8 @@ def validate_promocode_api():
                         return jsonify({"success":False, "error":"calculation error"}) 
                 else:
                     return jsonify({"success":False, "error":"Invalid Promo Code"})
+            else:
+                return jsonify({"success":False,"error":"Invalid Json"})
         else:
             return jsonify({"success": False, "error": "Invalid request"})
     except Exception as e:
@@ -3451,18 +3498,22 @@ def get_company_api():
 @app.route("/add-video-api/<id>", methods=["POST", "GET"])
 def add_video_api(id):
     try: 
-        if request.method == "POST":
-            video_link = request.form.get("video")
-            if not video_link:
-                return jsonify({"success":False,"error":"missing url"})
-            query = {'_id': ObjectId(id)}
-            trainer_data = db.trainers.find_one(query)
-            if trainer_data is not None:
-                newlink = {"$set": {'link': video_link}}
-                db.trainers.update_one(query, newlink)
-                return jsonify({"success":True,"status":"Link Updated"})
+        if request.method == "POST":            
+            if request.is_json:
+                data = request.get_json()
+                video_link = data['video']
+                if not video_link:
+                    return jsonify({"success":False,"error":"missing url"})
+                query = {'_id': ObjectId(id)}
+                trainer_data = db.trainers.find_one(query)
+                if trainer_data is not None:
+                    newlink = {"$set": {'link': video_link}}
+                    db.trainers.update_one(query, newlink)
+                    return jsonify({"success":True,"status":"Link Updated"})
+                else:
+                    return jsonify({"success":False,"error":"Invalid trainer id"})
             else:
-                return jsonify({"success":False,"error":"Invalid trainer id"})
+                return jsonify({"success":False,"msg":"Invalid Json Format"})
         else:
             return jsonify({"success": False, "msg": "Invalid request method"})
 
@@ -3812,16 +3863,18 @@ def payment_done_api():
             if request.is_json:
                 data = request.get_json()
                 customerid = data['customerid']
-                customername = data['customername']
-                email = data['email']
-                package = data['package']
+                # customername = data['customername']
+                # email = data['email']
+                package_id = data['package_id']
                 amount = data['amount']
                 bookingid = data['booking_id']
+                query = {"_id":ObjectId(customerid)}
+                customerData = db.customers.find_one(query)
                 newPayment = {
                     "customerid": ObjectId(customerid),
-                    "customername": customername,
-                    "email": email,
-                    "package": package,
+                    "customername": customerData['first_name'],
+                    "email": customerData['email'],
+                    "package_id": package_id,
                     "amount": amount,
                     "transaction_time": datetime.now(),
                     "bookingid": bookingid
